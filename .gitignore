@@ -45,6 +45,7 @@ skill/logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+.codepilot/
 
 # Planning & documentation (internal only)
 doc/

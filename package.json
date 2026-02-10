@@ -1,0 +1,25 @@
+{
+  "name": "streakbeast",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StreakBeast - Desktop pet that evolves based on your GitHub streaks",
+  "scripts": {
+    "dev": "pnpm --filter desktop dev",
+    "build": "pnpm -r build",
+    "clean": "pnpm -r clean && rm -rf node_modules"
+  },
+  "keywords": [
+    "github",
+    "gamification",
+    "desktop-pet",
+    "electron",
+    "blockchain"
+  ],
+  "author": "StreakBeast Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@streakbeast/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "StreakBeast smart contracts",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network opBNBTestnet",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network opBNBMainnet"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.1",
+    "dotenv": "^16.3.1",
+    "hardhat": "^2.19.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6"
+  }
+}
