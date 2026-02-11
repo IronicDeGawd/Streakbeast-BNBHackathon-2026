@@ -1,5 +1,4 @@
 {
-  "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "commonjs",
@@ -9,7 +8,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
-    "rootDir": "./"
+    "rootDir": "./",
+    "moduleResolution": "node"
   },
   "include": [
     "./contracts/**/*.sol",
