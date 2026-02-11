@@ -1,20 +1,37 @@
 import React from 'react';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { WalletProvider } from './contexts/WalletContext';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+import Stake from './pages/Stake';
+import Leaderboard from './pages/Leaderboard';
+import Achievements from './pages/Achievements';
+import Coach from './pages/Coach';
+import Settings from './pages/Settings';
 
 /**
  * Main application component for StreakBeast
+ * 
+ * Sets up routing with HashRouter (required for Electron) and wraps the app
+ * with WalletProvider for blockchain functionality. The Layout component
+ * provides the app shell with navigation.
  */
 function App(): React.ReactElement {
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-6xl font-display font-bold text-purple-500 mb-4">
-          StreakBeast
-        </h1>
-        <p className="text-xl font-body text-gray-300">
-          Your AI-powered Web3 companion
-        </p>
-      </div>
-    </div>
+    <WalletProvider>
+      <HashRouter>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/stake" element={<Stake />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/achievements" element={<Achievements />} />
+            <Route path="/coach" element={<Coach />} />
+            <Route path="/settings" element={<Settings />} />
+          </Routes>
+        </Layout>
+      </HashRouter>
+    </WalletProvider>
   );
 }
 
