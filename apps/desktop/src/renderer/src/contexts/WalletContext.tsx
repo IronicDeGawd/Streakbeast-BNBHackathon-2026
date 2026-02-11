@@ -78,7 +78,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
    */
   const initProvider = useCallback(async (): Promise<EthereumProvider> => {
     const ethereumProvider = await EthereumProvider.init({
-      projectId: '0000000000000000000000000000000000000000', // Placeholder WalletConnect project ID
+      projectId: 'f4466d6b6afcca9abc283f0cc3712313',
       chains: [5611], // opBNB Testnet
       optionalChains: [204], // opBNB Mainnet
       showQrModal: true,
