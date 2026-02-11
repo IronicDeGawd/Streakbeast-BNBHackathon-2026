@@ -84,27 +84,27 @@ function createFireParticles(count: number): ParticleSystem {
    * Updates fire particles - move up with x oscillation, reset when too high
    */
   function update(time: number): void {
-    const positions = geometry.attributes.position.array as Float32Array;
+    const posAttr = geometry.attributes.position!;
+    const positions = posAttr.array as Float32Array;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      
+
       // Move y up
-      positions[i3 + 1] += 0.02;
-      
+      positions[i3 + 1]! += 0.02;
+
       // Add slight x oscillation
-      positions[i3] += Math.sin(time + i) * 0.002;
-      
+      positions[i3]! += Math.sin(time + i) * 0.002;
+
       // Reset when particle goes too high
-      if (positions[i3 + 1] > 2) {
+      if (positions[i3 + 1]! > 2) {
         positions[i3 + 1] = 0;
-        // Randomize x and z
         positions[i3] = (Math.random() - 0.5) * 1.0;
         positions[i3 + 2] = (Math.random() - 0.5) * 1.0;
       }
     }
 
-    geometry.attributes.position.needsUpdate = true;
+    posAttr.needsUpdate = true;
   }
 
   /**
@@ -223,17 +223,18 @@ function createRainParticles(count: number): ParticleSystem {
   /**
    * Updates rain particles - move down, reset when too low
    */
-  function update(time: number): void {
-    const positions = geometry.attributes.position.array as Float32Array;
+  function update(_time: number): void {
+    const posAttr = geometry.attributes.position!;
+    const positions = posAttr.array as Float32Array;
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
-      
+
       // Move y down
-      positions[i3 + 1] -= 0.05;
-      
+      positions[i3 + 1]! -= 0.05;
+
       // Reset when particle goes too low
-      if (positions[i3 + 1] < -1) {
+      if (positions[i3 + 1]! < -1) {
         positions[i3 + 1] = 4;
         // Randomize x and z
         positions[i3] = (Math.random() - 0.5) * 4;
@@ -241,7 +242,7 @@ function createRainParticles(count: number): ParticleSystem {
       }
     }
 
-    geometry.attributes.position.needsUpdate = true;
+    posAttr.needsUpdate = true;
   }
 
   /**

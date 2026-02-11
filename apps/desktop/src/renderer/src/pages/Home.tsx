@@ -10,7 +10,7 @@ import { cardReveal } from '../animations/cardReveal';
  * view their pet, and monitor overall progress.
  */
 function Home(): React.ReactElement {
-  const [currentStreak, setCurrentStreak] = useState(7);
+  const [currentStreak] = useState(7);
   const streakRef = useRef<HTMLDivElement>(null);
   const habitsContainerRef = useRef<HTMLDivElement>(null);
 

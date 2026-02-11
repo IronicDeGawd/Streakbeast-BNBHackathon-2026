@@ -177,12 +177,12 @@ export function interactionWave(pet: THREE.Group): { start: () => void } {
         // Oscillate between -0.5 and -1.5 twice using Math.sin
         // Two full cycles over the duration: frequency = 2
         const angle = Math.sin(progress * Math.PI * 4); // 4 = 2 cycles * 2 (for full wave)
-        rightArm.rotation.z = -0.5 + angle * -0.5; // -0.5 ± 0.5 = range [-1.5, -0.5]
+        rightArm!.rotation.z = -0.5 + angle * -0.5; // -0.5 ± 0.5 = range [-1.5, -0.5]
 
         requestAnimationFrame(animate);
       } else {
         // Return to initial position
-        rightArm.rotation.z = initialRotZ;
+        rightArm!.rotation.z = initialRotZ;
       }
     }
 

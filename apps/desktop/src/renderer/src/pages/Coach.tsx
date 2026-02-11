@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import PetCanvas from '../components/PetCanvas';
 
@@ -84,7 +83,7 @@ function Coach(): React.ReactElement {
       const randomResponse = mockAIResponses[Math.floor(Math.random() * mockAIResponses.length)];
       const aiMessage: Message = {
         id: messages.length + 1,
-        text: randomResponse,
+        text: randomResponse ?? '',
         sender: 'ai',
         timestamp: new Date()
       };

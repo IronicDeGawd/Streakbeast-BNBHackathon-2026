@@ -14,7 +14,7 @@ import React, {
 } from 'react';
 import { BrowserProvider, JsonRpcSigner, formatEther } from 'ethers';
 import EthereumProvider from '@walletconnect/ethereum-provider';
-import { CHAIN_CONFIG } from '../contracts/addresses';
+// CHAIN_CONFIG available from '../contracts/addresses' if needed
 
 /**
  * WalletContext type definition
@@ -139,7 +139,7 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
       setSigner(ethersSigner);
 
       // Get account address
-      const accountAddress = accounts[0];
+      const accountAddress = accounts[0] ?? null;
       setAccount(accountAddress);
 
       // Get chain ID
@@ -147,7 +147,9 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
       setChainId(Number(network.chainId));
 
       // Fetch balance
-      await fetchBalance(ethersProvider, accountAddress);
+      if (accountAddress) {
+        await fetchBalance(ethersProvider, accountAddress);
+      }
     } catch (err) {
       console.error('Failed to connect wallet:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect wallet');
@@ -214,9 +216,10 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
         // User disconnected all accounts
         await disconnect();
       } else {
-        setAccount(accounts[0]);
-        if (provider) {
-          await fetchBalance(provider, accounts[0]);
+        const newAccount = accounts[0] ?? null;
+        setAccount(newAccount);
+        if (provider && newAccount) {
+          await fetchBalance(provider, newAccount);
         }
       }
     },
@@ -293,13 +296,15 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
             const ethersSigner = await ethersProvider.getSigner();
             setSigner(ethersSigner);
 
-            const accountAddress = accounts[0];
+            const accountAddress = accounts[0] ?? null;
             setAccount(accountAddress);
 
             const network = await ethersProvider.getNetwork();
             setChainId(Number(network.chainId));
 
-            await fetchBalance(ethersProvider, accountAddress);
+            if (accountAddress) {
+              await fetchBalance(ethersProvider, accountAddress);
+            }
           }
         }
       } catch (err) {

@@ -145,7 +145,7 @@ const navItems: NavItem[] = [
  */
 function Sidebar(): React.ReactElement {
   const location = useLocation();
-  const activeItemRef = useRef<HTMLDivElement | null>(null);
+  const activeItemRef = useRef<HTMLAnchorElement | null>(null);
 
   /**
    * Animate active indicator when location changes

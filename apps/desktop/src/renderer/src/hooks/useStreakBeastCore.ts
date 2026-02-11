@@ -10,6 +10,23 @@ import { CONTRACT_ADDRESSES } from '../contracts/addresses';
 import StreakBeastCoreABI from '../contracts/StreakBeastCore.json';
 
 /**
+ * Typed wrapper for StreakBeastCore contract.
+ * ethers v6 Contract uses runtime dispatch; we define explicit method signatures.
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface StreakBeastCoreContract {
+  stake(habitType: number, durationDays: number, overrides?: any): Promise<any>;
+  claimReward(poolId: number): Promise<any>;
+  getStreak(habitId: number): Promise<any>;
+  getHabit(habitId: number | any): Promise<any>;
+  getUserHabits(address: string): Promise<any[]>;
+  getPool(poolId: number): Promise<any>;
+  getRewardBalance(poolId: number, address: string): Promise<any>;
+  nextPoolId(): Promise<any>;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
  * Habit struct from contract
  */
 export interface Habit {
@@ -51,7 +68,7 @@ export interface LeaderboardEntry {
  */
 export interface UseStreakBeastCoreReturn {
   /** Read-only contract instance */
-  contract: Contract | null;
+  contract: StreakBeastCoreContract | null;
   /** Contract is ready to use */
   isReady: boolean;
   /** Stake BNB to create a habit */
@@ -82,7 +99,7 @@ export function useStreakBeastCore(): UseStreakBeastCoreReturn {
   /**
    * Create read-only contract instance (with provider)
    */
-  const contract = useMemo(() => {
+  const contract = useMemo((): StreakBeastCoreContract | null => {
     if (!provider || !chainId) return null;
 
     const contractAddress = CONTRACT_ADDRESSES[chainId]?.core;
@@ -90,13 +107,13 @@ export function useStreakBeastCore(): UseStreakBeastCoreReturn {
       return null;
     }
 
-    return new Contract(contractAddress, StreakBeastCoreABI.abi, provider);
+    return new Contract(contractAddress, StreakBeastCoreABI.abi, provider) as unknown as StreakBeastCoreContract;
   }, [provider, chainId]);
 
   /**
    * Create write contract instance (with signer)
    */
-  const writeContract = useMemo(() => {
+  const writeContract = useMemo((): StreakBeastCoreContract | null => {
     if (!signer || !chainId) return null;
 
     const contractAddress = CONTRACT_ADDRESSES[chainId]?.core;
@@ -104,7 +121,7 @@ export function useStreakBeastCore(): UseStreakBeastCoreReturn {
       return null;
     }
 
-    return new Contract(contractAddress, StreakBeastCoreABI.abi, signer);
+    return new Contract(contractAddress, StreakBeastCoreABI.abi, signer) as unknown as StreakBeastCoreContract;
   }, [signer, chainId]);
 
   /**
@@ -342,7 +359,7 @@ export function useStreakBeastCore(): UseStreakBeastCoreReturn {
  * Iterates through pools to find matching one
  */
 async function findPoolIdForHabit(
-  contract: Contract,
+  contract: StreakBeastCoreContract,
   habitType: number,
   startTime: number,
   duration: number,

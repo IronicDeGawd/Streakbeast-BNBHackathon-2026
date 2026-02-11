@@ -64,7 +64,7 @@ export function celebration(container: HTMLElement): anime.AnimeTimelineInstance
     confetti.style.width = '8px';
     confetti.style.height = '8px';
     confetti.style.borderRadius = '50%';
-    confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+    confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)] ?? '#6C3CE1';
     confetti.style.left = '50%';
     confetti.style.top = '50%';
     confetti.style.transform = 'translate(-50%, -50%)';

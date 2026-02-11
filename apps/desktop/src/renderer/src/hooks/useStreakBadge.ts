@@ -10,6 +10,19 @@ import { CONTRACT_ADDRESSES } from '../contracts/addresses';
 import StreakBadgeABI from '../contracts/StreakBadge.json';
 
 /**
+ * Typed wrapper for StreakBadge contract.
+ * ethers v6 Contract uses runtime dispatch; we define explicit method signatures.
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface StreakBadgeContract {
+  getBadgesByUser(address: string): Promise<any[]>;
+  getBadge(tokenId: number): Promise<any>;
+  tokenURI(tokenId: number): Promise<string>;
+  hasBadge(address: string, badgeType: number): Promise<boolean>;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+/**
  * Badge information interface
  */
 export interface BadgeInfo {
@@ -42,7 +55,7 @@ export const BADGE_NAMES = [
  */
 export interface UseStreakBadgeReturn {
   /** Read-only contract instance */
-  contract: Contract | null;
+  contract: StreakBadgeContract | null;
   /** Contract is ready to use */
   isReady: boolean;
   /** Get badge token IDs for a user */
@@ -69,7 +82,7 @@ export function useStreakBadge(): UseStreakBadgeReturn {
   /**
    * Create read-only contract instance (with provider)
    */
-  const contract = useMemo(() => {
+  const contract = useMemo((): StreakBadgeContract | null => {
     if (!provider || !chainId) return null;
 
     const contractAddress = CONTRACT_ADDRESSES[chainId]?.badge;
@@ -77,7 +90,7 @@ export function useStreakBadge(): UseStreakBadgeReturn {
       return null;
     }
 
-    return new Contract(contractAddress, StreakBadgeABI.abi, provider);
+    return new Contract(contractAddress, StreakBadgeABI.abi, provider) as unknown as StreakBadgeContract;
   }, [provider, chainId]);
 
   /**

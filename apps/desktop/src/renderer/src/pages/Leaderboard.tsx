@@ -94,9 +94,9 @@ function Leaderboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-full bg-gray-400 text-black font-bold flex items-center justify-center mx-auto text-sm">
                 2
               </div>
-              <p className="text-white/60 text-sm">{top3[1].address}</p>
-              <p className="text-xl font-display font-bold text-white">{top3[1].streak} days</p>
-              <p className="text-white/60 text-xs">{top3[1].earned}</p>
+              <p className="text-white/60 text-sm">{top3[1]!.address}</p>
+              <p className="text-xl font-display font-bold text-white">{top3[1]!.streak} days</p>
+              <p className="text-white/60 text-xs">{top3[1]!.earned}</p>
             </div>
           </Card>
 
@@ -106,9 +106,9 @@ function Leaderboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-full bg-yellow-400 text-black font-bold flex items-center justify-center mx-auto text-sm">
                 1
               </div>
-              <p className="text-white/60 text-sm">{top3[0].address}</p>
-              <p className="text-2xl font-display font-bold text-white">{top3[0].streak} days</p>
-              <p className="text-white/60 text-sm">{top3[0].earned}</p>
+              <p className="text-white/60 text-sm">{top3[0]!.address}</p>
+              <p className="text-2xl font-display font-bold text-white">{top3[0]!.streak} days</p>
+              <p className="text-white/60 text-sm">{top3[0]!.earned}</p>
             </div>
           </Card>
 
@@ -118,9 +118,9 @@ function Leaderboard(): React.ReactElement {
               <div className="w-8 h-8 rounded-full bg-amber-600 text-black font-bold flex items-center justify-center mx-auto text-sm">
                 3
               </div>
-              <p className="text-white/60 text-sm">{top3[2].address}</p>
-              <p className="text-lg font-display font-bold text-white">{top3[2].streak} days</p>
-              <p className="text-white/60 text-xs">{top3[2].earned}</p>
+              <p className="text-white/60 text-sm">{top3[2]!.address}</p>
+              <p className="text-lg font-display font-bold text-white">{top3[2]!.streak} days</p>
+              <p className="text-white/60 text-xs">{top3[2]!.earned}</p>
             </div>
           </Card>
         </div>
