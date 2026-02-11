@@ -10,8 +10,8 @@
 export const CONTRACT_ADDRESSES: Record<number, { core: string; badge: string }> = {
   // opBNB Testnet
   5611: {
-    core: '0x0000000000000000000000000000000000000000',
-    badge: '0x0000000000000000000000000000000000000000',
+    core: '0x1C95958de2aB2b876609F052F239cFA72CEF87DC',
+    badge: '0x7ED2D07847eff93fB00F12FE2F48cB7c1cb9C634',
   },
   // opBNB Mainnet
   204: {
