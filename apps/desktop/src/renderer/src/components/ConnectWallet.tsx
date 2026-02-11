@@ -61,7 +61,7 @@ function ConnectWallet({ onConnect, isConnecting = false }: ConnectWalletProps):
 
         {/* Footer */}
         <p className="mt-4 text-xs text-white/30">
-          Powered by WalletConnect
+          Powered by Reown
         </p>
       </Card>
     </div>

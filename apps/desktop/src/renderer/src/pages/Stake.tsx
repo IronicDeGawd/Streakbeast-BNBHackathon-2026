@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { useStreakBeastCore } from '../hooks/useStreakBeastCore';
+import { useWallet } from '../contexts/WalletContext';
 
 /**
  * Habit types configuration
@@ -26,19 +29,33 @@ const DURATION_OPTIONS = [7, 14, 30, 60, 90];
  * Users can choose a habit type, set their stake amount, and start their streak.
  */
 function Stake(): React.ReactElement {
+  const navigate = useNavigate();
+  const { isConnected } = useWallet();
+  const { stake } = useStreakBeastCore();
+
   const [selectedHabit, setSelectedHabit] = useState<number | null>(null);
   const [stakeAmount, setStakeAmount] = useState<string>('0.01');
   const [selectedDuration, setSelectedDuration] = useState<number>(30);
   const [isStaking, setIsStaking] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   /**
-   * Handle stake button click
+   * Handle stake button click — calls StreakBeastCore.stake()
    */
-  const handleStake = (): void => {
+  const handleStake = async (): Promise<void> => {
+    if (selectedHabit === null || !isConnected) return;
+
     setIsStaking(true);
-    setTimeout(() => {
+    setError(null);
+    try {
+      await stake(selectedHabit, selectedDuration, stakeAmount);
+      navigate('/');
+    } catch (err) {
+      console.error('Stake failed:', err);
+      setError(err instanceof Error ? err.message : 'Transaction failed');
+    } finally {
       setIsStaking(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -142,15 +159,18 @@ function Stake(): React.ReactElement {
               <span className="text-white font-medium">{selectedDuration} days</span>
             </div>
           </div>
+          {error && (
+            <div className="text-red-400 text-sm text-center">{error}</div>
+          )}
           <Button
             variant="primary"
             size="lg"
             className="w-full"
-            disabled={selectedHabit === null || isStaking}
+            disabled={selectedHabit === null || isStaking || !isConnected}
             loading={isStaking}
             onClick={handleStake}
           >
-            Stake & Commit
+            {!isConnected ? 'Connect Wallet First' : 'Stake & Commit'}
           </Button>
         </div>
       </Card>

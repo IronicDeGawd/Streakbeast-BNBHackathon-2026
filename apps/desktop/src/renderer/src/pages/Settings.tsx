@@ -1,20 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import { useWallet } from '../contexts/WalletContext';
+import { CHAIN_CONFIG } from '../contracts/addresses';
+
+/**
+ * Format address as 0x1234...5678
+ */
+function formatAddress(address: string): string {
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
 
 /**
  * Settings page component
- * 
- * Displays user settings including wallet management, linked accounts, 
+ *
+ * Displays user settings including wallet management, linked accounts,
  * OpenClaw agent status, and user preferences.
  */
 function Settings(): React.ReactElement {
+  const { account, balance, chainId, isConnected, disconnect } = useWallet();
+
+  const [notifications, setNotifications] = useState<boolean>(true);
+  const [soundEffects, setSoundEffects] = useState<boolean>(false);
+  const [autoVerify, setAutoVerify] = useState<boolean>(true);
+
+  const networkName = chainId !== null ? CHAIN_CONFIG[chainId]?.name ?? 'Unknown Network' : 'Not connected';
+  const isOnSupportedNetwork = chainId !== null && CHAIN_CONFIG[chainId] !== undefined;
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <h1 className="text-2xl font-display font-bold text-white mb-6">
         Settings
       </h1>
-      
+
       {/* Wallet Section */}
       <Card>
         <h2 className="text-lg font-display font-semibold text-white mb-4">
@@ -23,23 +42,33 @@ function Settings(): React.ReactElement {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Connected Address</span>
-            <span className="text-white font-mono text-sm">0x1234...5678</span>
+            <span className="text-white font-mono text-sm">
+              {isConnected && account ? formatAddress(account) : 'Not connected'}
+            </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Network</span>
             <span className="text-white text-sm flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full inline-block"></div>
-              opBNB Testnet
+              <div className={`w-2 h-2 rounded-full inline-block ${
+                isConnected && isOnSupportedNetwork ? 'bg-green-400' : isConnected ? 'bg-yellow-400' : 'bg-red-400'
+              }`}></div>
+              {networkName}
             </span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Balance</span>
-            <span className="text-white text-sm">1.25 BNB</span>
+            <span className="text-white text-sm">
+              {isConnected && balance ? `${parseFloat(balance).toFixed(4)} BNB` : '—'}
+            </span>
           </div>
           <div className="pt-2">
-            <Button variant="secondary" size="sm">
-              Disconnect Wallet
-            </Button>
+            {isConnected ? (
+              <Button variant="secondary" size="sm" onClick={disconnect}>
+                Disconnect Wallet
+              </Button>
+            ) : (
+              <span className="text-sm text-white/40">Connect via the top bar</span>
+            )}
           </div>
         </div>
       </Card>
@@ -67,11 +96,11 @@ function Settings(): React.ReactElement {
               <span className="text-2xl">💙</span>
               <div>
                 <div className="text-white text-sm font-medium">GitHub</div>
-                <div className="text-green-400 text-xs">Connected as @ironicdegawd</div>
+                <div className="text-white/40 text-xs">Not connected</div>
               </div>
             </div>
-            <Button variant="ghost" size="sm">
-              Disconnect
+            <Button variant="secondary" size="sm">
+              Connect
             </Button>
           </div>
           <div className="flex items-center justify-between py-3 last:border-0">
@@ -103,12 +132,8 @@ function Settings(): React.ReactElement {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-white/60">Last Verification</span>
-            <span className="text-white text-sm">2 hours ago</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-white/60">Next Verification</span>
-            <span className="text-white text-sm">Today at 11:00 PM UTC</span>
+            <span className="text-sm text-white/60">Verification Schedule</span>
+            <span className="text-white text-sm">Daily at 11:00 PM UTC</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Skill Version</span>
@@ -125,21 +150,42 @@ function Settings(): React.ReactElement {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Desktop Notifications</span>
-            <div className="w-10 h-5 bg-accent rounded-full relative">
-              <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5"></div>
-            </div>
+            <button
+              onClick={() => setNotifications(!notifications)}
+              className={`w-10 h-5 rounded-full relative transition-colors ${
+                notifications ? 'bg-accent' : 'bg-white/20'
+              }`}
+            >
+              <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                notifications ? 'right-0.5' : 'left-0.5'
+              }`}></div>
+            </button>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Sound Effects</span>
-            <div className="w-10 h-5 bg-white/20 rounded-full relative">
-              <div className="w-4 h-4 bg-white rounded-full absolute left-0.5 top-0.5"></div>
-            </div>
+            <button
+              onClick={() => setSoundEffects(!soundEffects)}
+              className={`w-10 h-5 rounded-full relative transition-colors ${
+                soundEffects ? 'bg-accent' : 'bg-white/20'
+              }`}
+            >
+              <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                soundEffects ? 'right-0.5' : 'left-0.5'
+              }`}></div>
+            </button>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-white/60">Auto-verify Habits</span>
-            <div className="w-10 h-5 bg-accent rounded-full relative">
-              <div className="w-4 h-4 bg-white rounded-full absolute right-0.5 top-0.5"></div>
-            </div>
+            <button
+              onClick={() => setAutoVerify(!autoVerify)}
+              className={`w-10 h-5 rounded-full relative transition-colors ${
+                autoVerify ? 'bg-accent' : 'bg-white/20'
+              }`}
+            >
+              <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${
+                autoVerify ? 'right-0.5' : 'left-0.5'
+              }`}></div>
+            </button>
           </div>
         </div>
       </Card>
