@@ -84,7 +84,7 @@ export default function Settings() {
       <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>Settings</h1>
 
       {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 30, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
         <WalletStatusCard />
       </div>
 

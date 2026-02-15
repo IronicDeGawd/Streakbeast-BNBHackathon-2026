@@ -117,7 +117,7 @@ export default function Leaderboard() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: -10, top: -45, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+      <div style={{ position: 'absolute', right: 40, top: -45, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
         <WalletStatusCard />
       </div>
 

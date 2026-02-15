@@ -169,7 +169,7 @@ function Home(): React.ReactElement {
       </div>
 
       {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 30, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
         <WalletStatusCard />
       </div>
 

@@ -90,33 +90,33 @@ export default function Achievements() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Page Title */}
-      <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>
+      <h1 style={{ position: 'absolute', left: 40, top: 60, ...typography.heading1, animation: slideUp(0.1) }}>
         Achievements
       </h1>
 
       {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 30, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
         <WalletStatusCard />
       </div>
 
 
       {/* Badges Earned */}
-      <div style={{ position: 'absolute', left: 40, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 40, top: 115, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="red" title="Badges Earned" value={`${earnedCount} / ${badges.length}`} delay={0.2} />
       </div>
 
       {/* Total Streak Days */}
-      <div style={{ position: 'absolute', left: 430, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 430, top: 115, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="orange" title="Total Streak Days" value={isConnected ? `${totalStreakDays}` : 'N/A'} delay={0.3} />
       </div>
 
       {/* Longest Streak */}
-      <div style={{ position: 'absolute', left: 820, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 820, top: 115, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="purple" title="Longest Streak" value={isConnected ? `${longestStreak} days` : 'N/A'} delay={0.4} />
       </div>
 
       {/* Badge grid — large card area with blob + glow */}
-      <div style={{ position: 'absolute', left: 40, top: 290, width: 1200, height: 620, animation: slideUp(0.5) }}>
+      <div style={{ position: 'absolute', left: 40, top: 320, width: 1200, height: 620, animation: slideUp(0.5) }}>
         <div style={{ position: 'relative', width: 1200, height: 620 }}>
           <MainCardBlob idPrefix="ach_badges" top={-50} />
 
