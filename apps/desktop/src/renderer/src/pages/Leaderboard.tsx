@@ -1,291 +1,161 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import Card from '../components/ui/Card';
-import { cardReveal } from '../animations/cardReveal';
-import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
+/**
+ * Leaderboard — Competitive ranking page.
+ * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
+ */
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { RankCard, LeaderboardMainCard } from '../components/cards';
+import { useStreakBeastCore, type LeaderboardEntry } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
+import { FONT_HEADING } from '../utils/tokens';
 
-/**
- * Leaderboard entry type
- */
-interface LeaderboardEntry {
-  rank: number;
-  address: string;
-  streak: number;
-  earned: string;
-  habitType: string;
-}
-
-/**
- * Habit type names mapping
- */
 const HABIT_TYPE_NAMES: Record<number, string> = {
-  0: 'Coding',
-  1: 'Exercise',
-  2: 'Reading',
-  3: 'Meditation',
-  4: 'Language',
-  5: 'Custom',
+  0: 'Coding', 1: 'Exercise', 2: 'Reading',
+  3: 'Meditation', 4: 'Language', 5: 'Custom',
 };
 
-/**
- * Filter tabs for habit types
- */
-const filterTabs = ['All', 'Coding', 'Exercise', 'Reading', 'Meditation', 'Language'];
-
-/**
- * Format address as 0x1234...5678
- */
-function formatAddress(address: string): string {
-  if (address.length <= 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+function shortenAddr(addr: string): string {
+  return addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : '0x0000...0000';
 }
 
-/**
- * Leaderboard page component
- *
- * Displays the competitive leaderboard showing rankings of users based on their habit streaks.
- * Features a podium display for top 3 performers and a scrollable list for remaining ranks.
- * Includes filtering by habit type and card reveal animations.
- */
-function Leaderboard(): React.ReactElement {
+export default function Leaderboard() {
   const { isConnected } = useWallet();
-  const { contract, getPool, getHabit } = useStreakBeastCore();
+  const { contract, getPool, getLeaderboard } = useStreakBeastCore();
+  const [activeFilter, setActiveFilter] = useState('All');
+  const [allEntries, setAllEntries] = useState<(LeaderboardEntry & { habitType?: string; earned?: string })[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const [activeFilter, setActiveFilter] = useState<string>('All');
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  /**
-   * Fetch leaderboard data from all pools on-chain
-   */
   const fetchLeaderboard = useCallback(async () => {
     if (!contract) {
-      setEntries([]);
+      setAllEntries([]);
       return;
     }
-
     setLoading(true);
     try {
-      // Get total number of pools
-      const nextPool = await contract.nextPoolId();
-      const totalPools = Number(nextPool);
+      const nextPoolId = await (contract as any).nextPoolId();
+      const maxId = Number(nextPoolId);
+      const entries: (LeaderboardEntry & { habitType?: string; earned?: string })[] = [];
+      const seenAddresses = new Map<string, number>();
 
-      // Aggregate user streaks across all pools
-      const userStreaks: Map<string, { streak: number; habitType: number; stakeAmount: string }> = new Map();
-
-      for (let poolId = 1; poolId < totalPools; poolId++) {
+      for (let poolId = 1; poolId < maxId; poolId++) {
         try {
           const pool = await getPool(poolId);
+          const poolEntries = await getLeaderboard(poolId);
+          const habitTypeName = HABIT_TYPE_NAMES[pool.habitType] ?? 'Custom';
 
-          // Get habits in this pool via participants
-          for (const participant of pool.participants) {
-            try {
-              const habitIds = await contract.getUserHabits(participant);
-              for (const habitId of habitIds) {
-                try {
-                  const habit: Habit = {
-                    user: '',
-                    habitType: 0,
-                    stakeAmount: '0',
-                    startTime: 0,
-                    duration: 0,
-                    currentStreak: 0,
-                    longestStreak: 0,
-                    lastCheckIn: 0,
-                    active: false,
-                    claimed: false,
-                  };
-
-                  const raw = await getHabit(Number(habitId));
-                  Object.assign(habit, raw);
-
-                  const key = `${participant}-${habit.habitType}`;
-                  const existing = userStreaks.get(key);
-
-                  if (!existing || habit.currentStreak > existing.streak) {
-                    userStreaks.set(key, {
-                      streak: habit.currentStreak,
-                      habitType: habit.habitType,
-                      stakeAmount: habit.stakeAmount,
-                    });
-                  }
-                } catch {
-                  // Skip individual habit errors
-                }
+          for (const entry of poolEntries) {
+            const existing = seenAddresses.get(entry.address);
+            if (existing !== undefined) {
+              // Keep highest streak
+              if (entry.streak > allEntries[existing]?.streak) {
+                entries[existing] = {
+                  ...entry,
+                  habitType: habitTypeName,
+                  earned: `${(parseFloat(pool.totalStaked) / Math.max(pool.totalSuccessfulStreaks, 1) * (entry.streak > 0 ? 1 : 0)).toFixed(2)} BNB`,
+                };
               }
-            } catch {
-              // Skip participant errors
+            } else {
+              seenAddresses.set(entry.address, entries.length);
+              entries.push({
+                ...entry,
+                habitType: habitTypeName,
+                earned: `${(parseFloat(pool.totalStaked) / Math.max(pool.totalSuccessfulStreaks, 1) * (entry.streak > 0 ? 1 : 0)).toFixed(2)} BNB`,
+              });
             }
           }
-        } catch {
-          // Skip pool errors
-        }
+        } catch { /* pool may not exist */ }
       }
 
-      // Convert map to sorted leaderboard
-      const allEntries: LeaderboardEntry[] = [];
-      userStreaks.forEach((value, key) => {
-        const address = key.split('-')[0] ?? '';
-        allEntries.push({
-          rank: 0,
-          address,
-          streak: value.streak,
-          earned: `${value.stakeAmount} BNB`,
-          habitType: HABIT_TYPE_NAMES[value.habitType] ?? 'Custom',
-        });
-      });
-
       // Sort by streak descending
-      allEntries.sort((a, b) => b.streak - a.streak);
-
-      // Assign ranks
-      allEntries.forEach((entry, i) => {
-        entry.rank = i + 1;
-      });
-
-      setEntries(allEntries);
-    } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
-      setEntries([]);
+      entries.sort((a, b) => b.streak - a.streak);
+      setAllEntries(entries);
+    } catch (e) {
+      console.error('Failed to fetch leaderboard:', e);
+      setAllEntries([]);
     } finally {
       setLoading(false);
     }
-  }, [contract, getPool, getHabit]);
+  }, [contract, getPool, getLeaderboard]);
 
-  useEffect(() => {
-    fetchLeaderboard();
-  }, [fetchLeaderboard]);
+  useEffect(() => { fetchLeaderboard(); }, [fetchLeaderboard]);
 
-  // Filter leaderboard data based on active filter
-  const filteredData = activeFilter === 'All'
-    ? entries
-    : entries.filter(entry => entry.habitType === activeFilter);
+  const filtered = useMemo(() => {
+    if (activeFilter === 'All') return allEntries;
+    return allEntries.filter((e) => e.habitType === activeFilter);
+  }, [activeFilter, allEntries]);
 
-  // Re-rank filtered data
-  const rankedData = filteredData.map((entry, i) => ({ ...entry, rank: i + 1 }));
+  const top3 = filtered.slice(0, 3);
+  const remaining = filtered.slice(3).map((entry, idx) => ({
+    ...entry,
+    rank: idx + 4,
+    address: shortenAddr(entry.address),
+  }));
 
-  // Get top 3 and remaining entries
-  const top3 = rankedData.slice(0, 3);
-  const remaining = rankedData.slice(3);
+  if (loading) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: FONT_HEADING, fontSize: 18, color: 'rgba(255,255,255,0.5)' }}>Loading leaderboard…</span>
+      </div>
+    );
+  }
 
-  // Animate rank cards on mount and filter change
-  useEffect(() => {
-    if (!loading && rankedData.length > 0) {
-      const timer = setTimeout(() => {
-        cardReveal('.rank-list > div');
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [activeFilter, loading, rankedData.length]);
+  if (!isConnected) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: FONT_HEADING, fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>Connect wallet to view leaderboard</span>
+      </div>
+    );
+  }
+
+  if (allEntries.length === 0 && !loading) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: FONT_HEADING, fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>No participants yet. Be the first to stake!</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Title */}
-      <h1 className="text-2xl font-display font-bold text-white mb-6">
-        Leaderboard
-      </h1>
-
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6">
-        {filterTabs.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveFilter(tab)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-              activeFilter === tab
-                ? 'bg-accent text-white'
-                : 'bg-white/10 text-white/60 hover:bg-white/20'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Loading state */}
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Rank 2 — Purple, left */}
+      {top3[1] && (
+        <div style={{ position: 'absolute', left: 34, top: 100, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+          <RankCard rank={2} address={shortenAddr(top3[1].address)} earned={top3[1].earned ?? '0 BNB'} delay={0.3} />
         </div>
-      ) : !isConnected ? (
-        <div className="text-center py-12">
-          <div className="text-white/60">Connect wallet to view leaderboard</div>
-        </div>
-      ) : rankedData.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-white/60">No leaderboard data yet</div>
-        </div>
-      ) : (
-        <>
-          {/* Top 3 Podium */}
-          {top3.length >= 3 && (
-            <div className="flex items-end justify-center gap-4 mb-8 h-[200px]">
-              {/* 2nd Place */}
-              <Card className="w-40 text-center h-36 bg-gradient-to-t from-white/5 to-white/10">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-400 text-black font-bold flex items-center justify-center mx-auto text-sm">
-                    2
-                  </div>
-                  <p className="text-white/60 text-sm">{formatAddress(top3[1]!.address)}</p>
-                  <p className="text-xl font-display font-bold text-white">{top3[1]!.streak} days</p>
-                  <p className="text-white/60 text-xs">{top3[1]!.earned}</p>
-                </div>
-              </Card>
-
-              {/* 1st Place */}
-              <Card className="w-40 text-center h-48 bg-gradient-to-t from-white/5 to-white/10">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-yellow-400 text-black font-bold flex items-center justify-center mx-auto text-sm">
-                    1
-                  </div>
-                  <p className="text-white/60 text-sm">{formatAddress(top3[0]!.address)}</p>
-                  <p className="text-2xl font-display font-bold text-white">{top3[0]!.streak} days</p>
-                  <p className="text-white/60 text-sm">{top3[0]!.earned}</p>
-                </div>
-              </Card>
-
-              {/* 3rd Place */}
-              <Card className="w-40 text-center h-28 bg-gradient-to-t from-white/5 to-white/10">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-amber-600 text-black font-bold flex items-center justify-center mx-auto text-sm">
-                    3
-                  </div>
-                  <p className="text-white/60 text-sm">{formatAddress(top3[2]!.address)}</p>
-                  <p className="text-lg font-display font-bold text-white">{top3[2]!.streak} days</p>
-                  <p className="text-white/60 text-xs">{top3[2]!.earned}</p>
-                </div>
-              </Card>
-            </div>
-          )}
-
-          {/* Remaining Ranks */}
-          {remaining.length > 0 && (
-            <div className="space-y-2 rank-list">
-              {remaining.map(entry => (
-                <Card key={`${entry.address}-${entry.rank}`} className="flex items-center justify-between p-4">
-                  <div className="flex items-center gap-4">
-                    <span className="w-8 text-center font-display font-bold text-white/60">
-                      #{entry.rank}
-                    </span>
-                    <span className="text-white font-medium">{formatAddress(entry.address)}</span>
-                    <span className="text-xs bg-white/10 rounded-full px-2 py-0.5 text-white/60">
-                      {entry.habitType}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <span className="font-display font-bold text-accent">
-                      {entry.streak} days
-                    </span>
-                    <span className="text-white/60 text-sm">{entry.earned}</span>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </>
       )}
+
+      {/* Rank 1 — Orange, center */}
+      {top3[0] && (
+        <div style={{ position: 'absolute', left: 436, top: -34, zIndex: 2, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+          <RankCard rank={1} address={shortenAddr(top3[0].address)} earned={top3[0].earned ?? '0 BNB'} delay={0.2} />
+        </div>
+      )}
+
+      {/* Rank 3 — Red, right */}
+      {top3[2] && (
+        <div style={{ position: 'absolute', left: 781, top: 105, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+          <RankCard rank={3} address={shortenAddr(top3[2].address)} earned={top3[2].earned ?? '0 BNB'} delay={0.4} />
+        </div>
+      )}
+
+      {/* Main Leaderboard Card */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 150,
+          top: 350,
+          width: 1161,
+          height: 590,
+          transform: 'scale(0.8)',
+          transformOrigin: 'top left',
+        }}
+      >
+        <LeaderboardMainCard
+          delay={0.5}
+          activeFilter={activeFilter}
+          onFilterChange={setActiveFilter}
+          rankData={remaining}
+        />
+      </div>
     </div>
   );
 }
-
-export default Leaderboard;

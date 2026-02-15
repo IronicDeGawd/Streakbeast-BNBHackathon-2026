@@ -1,221 +1,273 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import Card from '../components/ui/Card';
+/**
+ * Home / Dashboard — Main page with prototype design + blockchain data.
+ *
+ * The page renders inside the scaled canvas (App.tsx handles
+ * PageShell, Sidebar, and viewport scaling).
+ */
+import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import PetCanvas from '../components/PetCanvas';
-import { cardReveal } from '../animations/cardReveal';
+import { MainCard, MetricCard, ActivityCard } from '../components/cards';
+import { slideUp, typography } from '../styles/theme';
+import { STATUS_DONE, STATUS_ACTIVE, EASE_SPRING } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
+import type { ActivityTheme } from '../styles/theme';
 
-/**
- * Habit type names mapping
- */
-const HABIT_TYPE_NAMES: Record<number, string> = {
-  0: 'Coding',
-  1: 'Exercise',
-  2: 'Reading',
-  3: 'Meditation',
-  4: 'Language',
-  5: 'Custom',
+/* ── Habit type → display meta ── */
+const HABIT_META: Record<number, { icon: string; theme: ActivityTheme }> = {
+  0: { icon: '</>', theme: 'purple' },
+  1: { icon: '🏃', theme: 'red' },
+  2: { icon: '📖', theme: 'coral' },
+  3: { icon: '🧘', theme: 'purple' },
+  4: { icon: '🗣', theme: 'red' },
+  5: { icon: '⭐', theme: 'coral' },
 };
 
-/**
- * Home page component
- * 
- * Main dashboard view for StreakBeast where users can track their habits,
- * view their pet, and monitor overall progress.
- */
+const HABIT_TYPE_NAMES: Record<number, string> = {
+  0: 'Coding', 1: 'Exercise', 2: 'Reading',
+  3: 'Meditation', 4: 'Language', 5: 'Custom',
+};
+
+/* ── Carousel constants ── */
+const CARD_GAP = 24;
+const CARD_WIDTH = 390;
+const CARDS_PER_PAGE = 3;
+const VISIBLE_WIDTH = CARD_WIDTH * CARDS_PER_PAGE + CARD_GAP * (CARDS_PER_PAGE - 1);
+const SCROLL_AMOUNT = VISIBLE_WIDTH + CARD_GAP;
+
+/* ── Helpers ── */
+function formatTimeUntilNext(lastCheckIn: number): string {
+  if (lastCheckIn === 0) return 'Now';
+  const nextCheckIn = lastCheckIn + 86400; // 24h after last
+  const nowSec = Math.floor(Date.now() / 1000);
+  const remaining = nextCheckIn - nowSec;
+  if (remaining <= 0) return 'Now';
+  const hours = Math.floor(remaining / 3600);
+  const mins = Math.floor((remaining % 3600) / 60);
+  return `${hours}h ${mins}m`;
+}
+
 function Home(): React.ReactElement {
   const { account, isConnected } = useWallet();
-  const { getUserHabits, getHabit } = useStreakBeastCore();
-  
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [totalStaked, setTotalStaked] = useState<string>('0.00');
-  const [totalRewards] = useState<string>('0.00'); // Keep as 0.00 for now
-  const [currentStreak, setCurrentStreak] = useState<number>(0);
-  
-  const streakRef = useRef<HTMLDivElement>(null);
-  const habitsContainerRef = useRef<HTMLDivElement>(null);
+  const { getUserHabits, getHabit, getPool, contract } = useStreakBeastCore();
 
-  /**
-   * Fetch user habits from blockchain
-   */
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalStaked, setTotalStaked] = useState('0.00');
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [rewardPool, setRewardPool] = useState('0.00');
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  /* ── Blockchain data fetch ── */
   const fetchHabits = useCallback(async () => {
     if (!account || !isConnected) {
-      setHabits([]);
-      setCurrentStreak(0);
-      setTotalStaked('0.00');
-      return;
+      setHabits([]); setCurrentStreak(0); setTotalStaked('0.00'); setRewardPool('0.00'); return;
     }
-
     setLoading(true);
     try {
-      // Get user's habit IDs
       const habitIds = await getUserHabits(account);
-      
-      if (habitIds.length === 0) {
-        setHabits([]);
-        setCurrentStreak(0);
-        setTotalStaked('0.00');
-        return;
+      if (habitIds.length === 0) { setHabits([]); setCurrentStreak(0); setTotalStaked('0.00'); setRewardPool('0.00'); return; }
+      const fetched = await Promise.all(habitIds.map((id) => getHabit(id)));
+      setHabits(fetched);
+      setCurrentStreak(fetched.reduce((m, h) => Math.max(m, h.currentStreak), 0));
+      setTotalStaked(fetched.filter((h) => h.active).reduce((s, h) => s + parseFloat(h.stakeAmount), 0).toFixed(2));
+
+      // Fetch reward pool total from active pools
+      if (contract) {
+        try {
+          const nextPoolId = await (contract as any).nextPoolId();
+          const maxId = Number(nextPoolId);
+          let poolTotal = 0;
+          for (let i = 1; i < maxId; i++) {
+            try {
+              const pool = await getPool(i);
+              if (!pool.distributed) {
+                poolTotal += parseFloat(pool.totalStaked);
+              }
+            } catch { /* pool may not exist */ }
+          }
+          setRewardPool(poolTotal.toFixed(2));
+        } catch { setRewardPool('0.00'); }
       }
+    } catch (e) { console.error('Failed to fetch habits:', e); setHabits([]); setCurrentStreak(0); setTotalStaked('0.00'); setRewardPool('0.00'); }
+    finally { setLoading(false); }
+  }, [account, isConnected, getUserHabits, getHabit, getPool, contract]);
 
-      // Fetch details for each habit
-      const habitPromises = habitIds.map((id) => getHabit(id));
-      const fetchedHabits = await Promise.all(habitPromises);
-      
-      setHabits(fetchedHabits);
+  useEffect(() => { fetchHabits(); }, [fetchHabits]);
 
-      // Calculate max streak across all habits
-      const maxStreak = fetchedHabits.reduce((max, habit) => {
-        return Math.max(max, habit.currentStreak);
-      }, 0);
-      setCurrentStreak(maxStreak);
+  /* ── Scroll helpers ── */
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }, []);
 
-      // Calculate total staked (sum of active habits only)
-      const totalStake = fetchedHabits
-        .filter((habit) => habit.active)
-        .reduce((sum, habit) => {
-          return sum + parseFloat(habit.stakeAmount);
-        }, 0);
-      setTotalStaked(totalStake.toFixed(2));
-    } catch (error) {
-      console.error('Failed to fetch habits:', error);
-      setHabits([]);
-      setCurrentStreak(0);
-      setTotalStaked('0.00');
-    } finally {
-      setLoading(false);
-    }
-  }, [account, isConnected, getUserHabits, getHabit]);
-
-  /**
-   * Fetch habits on mount and when wallet connection changes
-   */
   useEffect(() => {
-    fetchHabits();
-  }, [fetchHabits]);
+    const el = scrollRef.current; if (!el) return;
+    const t = setTimeout(checkScroll, 1200);
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    return () => { clearTimeout(t); el.removeEventListener('scroll', checkScroll); };
+  }, [checkScroll]);
 
-  /**
-   * Animate habit cards after habits are loaded
-   */
-  useEffect(() => {
-    if (habits.length > 0 && !loading) {
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        cardReveal('.habit-card');
-      }, 100);
-    }
-  }, [habits, loading]);
-
-  /**
-   * Check if a habit was verified today
-   */
-  const isVerifiedToday = (lastCheckIn: number): boolean => {
-    if (lastCheckIn === 0) return false;
-    const now = Math.floor(Date.now() / 1000);
-    const timeSinceCheckIn = now - lastCheckIn;
-    return timeSinceCheckIn < 86400; // 24 hours in seconds
+  const scroll = (dir: 1 | -1) => {
+    scrollRef.current?.scrollBy({ left: dir * SCROLL_AMOUNT, behavior: 'smooth' });
   };
 
-  /**
-   * Determine if any habit is active (for pet animation)
-   */
-  const hasActiveHabit = habits.some((habit) => habit.active);
+  const isVerifiedToday = (lastCheckIn: number) => {
+    if (lastCheckIn === 0) return false;
+    return (Math.floor(Date.now() / 1000) - lastCheckIn) < 86400;
+  };
+
+  const hasActiveHabit = habits.some((h) => h.active);
+
+  /* ── Compute "next in" from the most recent lastCheckIn ── */
+  const nextIn = useMemo(() => {
+    const activeHabits = habits.filter((h) => h.active);
+    if (activeHabits.length === 0) return 'N/A';
+    const latestCheckIn = Math.max(...activeHabits.map((h) => h.lastCheckIn));
+    return formatTimeUntilNext(latestCheckIn);
+  }, [habits]);
+
+  /* ── Compute integrity status: % of active habits verified today ── */
+  const integrityPct = useMemo(() => {
+    const activeHabits = habits.filter((h) => h.active);
+    if (activeHabits.length === 0) return 'N/A';
+    const verified = activeHabits.filter((h) => isVerifiedToday(h.lastCheckIn)).length;
+    return `${Math.round((verified / activeHabits.length) * 100)}%`;
+  }, [habits]);
+
+  /* ── Build missions from real habits (no mock fallback) ── */
+  const missions = habits.filter((h) => h.active).map((h) => {
+    const meta = HABIT_META[h.habitType] ?? { icon: '⭐', theme: 'coral' as const };
+    const verified = isVerifiedToday(h.lastCheckIn);
+    return {
+      theme: meta.theme,
+      icon: meta.icon,
+      title: HABIT_TYPE_NAMES[h.habitType] ?? 'Custom',
+      streak: h.currentStreak,
+      status: verified ? 'Done' : 'Active',
+      statusColor: verified ? STATUS_DONE : STATUS_ACTIVE,
+    };
+  });
+
+  const showArrows = missions.length > 3;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-display font-bold text-white mb-6">
-        Dashboard
-      </h1>
-
-      {/* Main grid layout */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Left column - Pet Canvas */}
-        <div className="col-span-2">
-          <Card className="h-[400px] p-0 overflow-hidden">
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* MainCard with PetCanvas inside */}
+      <div style={{ position: 'absolute', left: 90, top: 111, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MainCard streakCount={currentStreak} nextIn={nextIn}>
+          {/* PetCanvas rendered inside MainCard */}
+          <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, height: 250, pointerEvents: 'none' }}>
             <PetCanvas streakDays={currentStreak} isActive={hasActiveHabit} />
-          </Card>
-        </div>
-
-        {/* Right column - Info cards */}
-        <div className="col-span-1 space-y-4">
-          {/* Streak counter card */}
-          <Card>
-            <div className="text-center">
-              <div className="text-sm text-white/60 mb-2">Current Streak</div>
-              <div ref={streakRef} className="text-5xl font-display font-bold text-accent mb-1">
-                {currentStreak}
-              </div>
-              <div className="text-sm text-white/60">days</div>
-            </div>
-          </Card>
-
-          {/* Staked amount card */}
-          <Card>
-            <div className="text-center">
-              <div className="text-sm text-white/60 mb-2">Total Staked</div>
-              <div className="text-2xl font-display font-bold text-white">
-                {totalStaked} BNB
-              </div>
-            </div>
-          </Card>
-
-          {/* Rewards card */}
-          <Card>
-            <div className="text-center">
-              <div className="text-sm text-white/60 mb-2">Rewards Earned</div>
-              <div className="text-2xl font-display font-bold text-white">
-                {totalRewards} BNB
-              </div>
-            </div>
-          </Card>
-        </div>
+          </div>
+        </MainCard>
       </div>
 
-      {/* Today's Habits section */}
-      <div>
-        <h2 className="text-lg font-display font-semibold text-white mb-4">
-          Today's Habits
-        </h2>
-        
-        <div ref={habitsContainerRef} className="grid grid-cols-3 gap-4">
+      {/* BNB at Risk */}
+      <div style={{ position: 'absolute', left: 749, top: 39, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MetricCard theme="red" title="BNB at Risk" value={totalStaked} delay={0.3} />
+      </div>
+
+      {/* Reward Pool */}
+      <div style={{ position: 'absolute', left: 830, top: 242, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MetricCard theme="orange" title="Reward Pool" value={`${rewardPool} BNB`} delay={0.5} />
+      </div>
+
+      {/* Integrity Status */}
+      <div style={{ position: 'absolute', left: 771, top: 438, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MetricCard theme="purple" title="Integrity Status" value={integrityPct} delay={0.7} />
+      </div>
+
+      {/* ── Daily Missions Section ── */}
+      <div style={{ position: 'absolute', left: 97, top: 600, width: VISIBLE_WIDTH, transform: 'scale(0.9)', transformOrigin: 'top left', overflow: 'hidden' }}>
+        {/* Header row */}
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: 16, paddingRight: 8, animation: slideUp(0.8),
+          }}
+        >
+          <h2 style={{ ...typography.heading3, margin: 0 }}>Daily Missions</h2>
+
+          {showArrows && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <span style={{ fontFamily: "'Inter'", fontWeight: 600, fontSize: 14, color: 'rgba(255,255,255,0.45)', marginRight: 4 }}>
+                {missions.length} missions
+              </span>
+              {/* Chevron buttons */}
+              {([-1, 1] as const).map((dir) => {
+                const can = dir === -1 ? canScrollLeft : canScrollRight;
+                return (
+                  <button
+                    key={dir}
+                    onClick={() => scroll(dir)}
+                    style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      background: can ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
+                      color: can ? '#fff' : 'rgba(255,255,255,0.2)',
+                      cursor: can ? 'pointer' : 'default',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 16, transition: 'all 0.2s ease',
+                      pointerEvents: can ? 'auto' : 'none',
+                    }}
+                  >
+                    {dir === -1 ? '‹' : '›'}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Scrollable card strip */}
+        <div
+          ref={scrollRef}
+          className="missions-scroll"
+          style={{
+            display: 'flex', gap: CARD_GAP,
+            overflowX: 'scroll', scrollSnapType: 'x mandatory',
+            scrollBehavior: 'smooth', paddingBottom: 12,
+            msOverflowStyle: 'none', scrollbarWidth: 'none',
+          }}
+        >
+          <style>{`.missions-scroll::-webkit-scrollbar { display: none; }`}</style>
           {loading ? (
-            // Loading state
-            <div className="col-span-3 flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: 40 }}>
+              <span style={{ fontFamily: "'Inter'", fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>Loading habits…</span>
             </div>
-          ) : !isConnected ? (
-            // Not connected state
-            <div className="col-span-3 text-center py-12">
-              <div className="text-white/60">Connect wallet to view habits</div>
-            </div>
-          ) : habits.length === 0 ? (
-            // Empty state
-            <div className="col-span-3 text-center py-12">
-              <div className="text-white/60">No active habits</div>
+          ) : missions.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: 40 }}>
+              <span style={{ fontFamily: "'Inter'", fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>
+                {isConnected ? 'No active habits. Stake to get started!' : 'Connect wallet to view habits'}
+              </span>
             </div>
           ) : (
-            // Render habit cards
-            habits.map((habit, index) => {
-              const habitName = HABIT_TYPE_NAMES[habit.habitType] || 'Custom';
-              const verified = isVerifiedToday(habit.lastCheckIn);
-              const verificationText = verified ? 'Verified today' : 'Pending verification';
-              const verificationColor = verified ? 'text-green-400' : 'text-yellow-400';
-
-              return (
-                <Card key={index} hover={true} className="habit-card">
-                  <div className="space-y-2">
-                    <div className="font-medium text-white">{habitName}</div>
-                    <div className="text-sm text-white/60">
-                      {habit.currentStreak} {habit.currentStreak === 1 ? 'day' : 'days'}
-                    </div>
-                    <div className={`text-sm ${verificationColor}`}>
-                      {verificationText}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })
+            missions.map((m, i) => (
+              <div
+                key={m.title}
+                style={{
+                  flex: `0 0 ${CARD_WIDTH}px`,
+                  scrollSnapAlign: i % CARDS_PER_PAGE === 0 ? 'start' : 'none',
+                  animation: `cardSlideUp 0.7s ${EASE_SPRING} ${0.9 + i * 0.1}s both`,
+                }}
+              >
+                <ActivityCard
+                  theme={m.theme}
+                  icon={m.icon}
+                  title={m.title}
+                  streak={m.streak}
+                  status={m.status}
+                  statusColor={m.statusColor}
+                  delay={0}
+                />
+              </div>
+            ))
           )}
         </div>
       </div>

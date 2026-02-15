@@ -2,25 +2,46 @@ import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { WalletProvider } from './contexts/WalletContext';
 import Layout from './components/Layout';
+import Sidebar from './components/Sidebar';
 import Home from './pages/Home';
 import Stake from './pages/Stake';
 import Leaderboard from './pages/Leaderboard';
 import Achievements from './pages/Achievements';
 import Coach from './pages/Coach';
 import Settings from './pages/Settings';
+import { useViewportScale, CANVAS_W, CANVAS_H } from './hooks/useViewportScale';
 
 /**
- * Main application component for StreakBeast
- * 
- * Sets up routing with HashRouter (required for Electron) and wraps the app
- * with WalletProvider for blockchain functionality. The Layout component
- * provides the app shell with navigation.
+ * Inner app component — needs to be inside HashRouter for Sidebar's useLocation
  */
-function App(): React.ReactElement {
+function AppContent(): React.ReactElement {
+  const scale = useViewportScale();
+
   return (
-    <WalletProvider>
-      <HashRouter>
-        <Layout>
+    <Layout>
+      {/* Scaled canvas container */}
+      <div
+        style={{
+          width: CANVAS_W,
+          height: CANVAS_H,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          position: 'relative',
+        }}
+      >
+        <Sidebar delay={0.15} />
+
+        {/* Page content area — offset for sidebar */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 140,
+            top: 0,
+            width: CANVAS_W - 140,
+            height: CANVAS_H,
+            overflow: 'hidden',
+          }}
+        >
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/stake" element={<Stake />} />
@@ -29,7 +50,20 @@ function App(): React.ReactElement {
             <Route path="/coach" element={<Coach />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
-        </Layout>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+/**
+ * Main application component for StreakBeast
+ */
+function App(): React.ReactElement {
+  return (
+    <WalletProvider>
+      <HashRouter>
+        <AppContent />
       </HashRouter>
     </WalletProvider>
   );

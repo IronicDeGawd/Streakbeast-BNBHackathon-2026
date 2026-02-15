@@ -1,23 +1,16 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import Card from '../components/ui/Card';
-import { cardReveal } from '../animations/cardReveal';
-import { useStreakBadge, BADGE_THRESHOLDS, BADGE_NAMES } from '../hooks/useStreakBadge';
-import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
-import { useWallet } from '../contexts/WalletContext';
-import { CHAIN_CONFIG } from '../contracts/addresses';
-
 /**
- * Badge display data
+ * Achievements — Badge/milestone page.
+ * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
-interface BadgeDisplay {
-  id: number;
-  name: string;
-  description: string;
-  icon: string;
-  earned: boolean;
-  progress: number;
-  txHash: string | null;
-}
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { MetricCard } from '../components/cards';
+import { MainCardBlob } from '../components/blobs';
+import { abs } from '../utils/styles';
+import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
+import { CARD_SHADOW, FONT_HEADING } from '../utils/tokens';
+import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
+import { useStreakBadge, BADGE_THRESHOLDS, BADGE_NAMES } from '../hooks/useStreakBadge';
+import { useWallet } from '../contexts/WalletContext';
 
 const BADGE_ICONS = ['🔥', '⚔️', '👑', '💎', '🛡️'];
 const BADGE_DESCRIPTIONS = [
@@ -28,230 +21,157 @@ const BADGE_DESCRIPTIONS = [
   'Maintain a 365-day streak',
 ];
 
-/**
- * Achievements page component
- *
- * Displays the user's NFT badge collection earned by hitting streak milestones.
- * Shows earned badges with transaction hashes and locked badges with progress.
- */
-function Achievements(): React.ReactElement {
-  const { account, isConnected, chainId } = useWallet();
-  const { hasBadge } = useStreakBadge();
+export default function Achievements() {
+  const { account, isConnected } = useWallet();
   const { getUserHabits, getHabit } = useStreakBeastCore();
+  const { hasBadge, isReady: badgeReady } = useStreakBadge();
 
-  const [badges, setBadges] = useState<BadgeDisplay[]>([]);
-  const [totalStreakDays, setTotalStreakDays] = useState<number>(0);
-  const [longestStreak, setLongestStreak] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [badgeOwnership, setBadgeOwnership] = useState<boolean[]>([false, false, false, false, false]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchAchievements = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!account || !isConnected) {
-      // Default badges (all locked, 0 progress)
-      setBadges(BADGE_NAMES.map((name, i) => ({
-        id: i,
-        name,
-        description: BADGE_DESCRIPTIONS[i] ?? '',
-        icon: BADGE_ICONS[i] ?? '⭐',
-        earned: false,
-        progress: 0,
-        txHash: null,
-      })));
-      setTotalStreakDays(0);
-      setLongestStreak(0);
+      setHabits([]);
+      setBadgeOwnership([false, false, false, false, false]);
       return;
     }
-
     setLoading(true);
     try {
-      // Fetch user habits for streak data
-      let maxStreak = 0;
-      let totalDays = 0;
+      // Fetch habits
+      const habitIds = await getUserHabits(account);
+      const fetched = habitIds.length > 0
+        ? await Promise.all(habitIds.map((id) => getHabit(id)))
+        : [];
+      setHabits(fetched);
 
-      try {
-        const habitIds = await getUserHabits(account);
-        const habits: Habit[] = await Promise.all(habitIds.map((id) => getHabit(id)));
-        maxStreak = habits.reduce((max, h) => Math.max(max, h.longestStreak), 0);
-        totalDays = habits.reduce((sum, h) => sum + h.currentStreak, 0);
-      } catch {
-        // Contract may not be available
+      // Fetch badge ownership
+      if (badgeReady) {
+        const ownership = await Promise.all(
+          BADGE_THRESHOLDS.map((_, i) =>
+            hasBadge(i, account).catch(() => false)
+          )
+        );
+        setBadgeOwnership(ownership);
       }
-
-      setLongestStreak(maxStreak);
-      setTotalStreakDays(totalDays);
-
-      // Check which badges are earned on-chain
-      const badgeResults: BadgeDisplay[] = [];
-      for (let i = 0; i < BADGE_NAMES.length; i++) {
-        let earned = false;
-        try {
-          earned = await hasBadge(i, account);
-        } catch {
-          // Contract may not be available
-        }
-
-        const threshold = BADGE_THRESHOLDS[i] ?? 1;
-        const progress = earned ? 100 : Math.min(100, Math.floor((maxStreak / threshold) * 100));
-
-        badgeResults.push({
-          id: i,
-          name: BADGE_NAMES[i] ?? '',
-          description: BADGE_DESCRIPTIONS[i] ?? '',
-          icon: BADGE_ICONS[i] ?? '⭐',
-          earned,
-          progress,
-          txHash: null, // Would need event indexing for actual tx hashes
-        });
-      }
-
-      setBadges(badgeResults);
-    } catch (error) {
-      console.error('Failed to fetch achievements:', error);
+    } catch (e) {
+      console.error('Failed to fetch achievements:', e);
+      setHabits([]);
     } finally {
       setLoading(false);
     }
-  }, [account, isConnected, hasBadge, getUserHabits, getHabit]);
+  }, [account, isConnected, getUserHabits, getHabit, hasBadge, badgeReady]);
 
-  useEffect(() => {
-    fetchAchievements();
-  }, [fetchAchievements]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const earnedCount = badges.filter(b => b.earned).length;
-  const totalBadges = badges.length;
+  /* ── Computed values ── */
+  const longestStreak = useMemo(() =>
+    habits.reduce((m, h) => Math.max(m, h.longestStreak), 0),
+    [habits]
+  );
 
-  const explorerUrl = chainId ? CHAIN_CONFIG[chainId]?.explorer : null;
+  const totalStreakDays = useMemo(() =>
+    habits.reduce((s, h) => s + h.currentStreak, 0),
+    [habits]
+  );
 
-  useEffect(() => {
-    if (badges.length > 0 && !loading) {
-      setTimeout(() => {
-        cardReveal('.badge-grid > div');
-      }, 100);
-    }
-  }, [badges, loading]);
+  const earnedCount = badgeOwnership.filter(Boolean).length;
+
+  const badges = BADGE_THRESHOLDS.map((threshold, i) => ({
+    id: i,
+    name: BADGE_NAMES[i],
+    icon: BADGE_ICONS[i],
+    description: BADGE_DESCRIPTIONS[i],
+    threshold,
+    progress: Math.min(100, Math.round((longestStreak / threshold) * 100)),
+    earned: badgeOwnership[i],
+  }));
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-display font-bold text-white mb-6">
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Page Title */}
+      <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>
         Achievements
       </h1>
 
-      {/* Stats summary row */}
-      <div className="flex gap-4 mb-6">
-        <Card className="flex-1">
-          <div className="text-center">
-            <div className="text-sm text-white/60 mb-2">Badges Earned</div>
-            <div className="text-3xl font-display font-bold text-accent">
-              {earnedCount} / {totalBadges}
-            </div>
-          </div>
-        </Card>
-        <Card className="flex-1">
-          <div className="text-center">
-            <div className="text-sm text-white/60 mb-2">Total Streak Days</div>
-            <div className="text-3xl font-display font-bold text-white">{totalStreakDays}</div>
-          </div>
-        </Card>
-        <Card className="flex-1">
-          <div className="text-center">
-            <div className="text-sm text-white/60 mb-2">Longest Streak</div>
-            <div className="text-3xl font-display font-bold text-green-400">{longestStreak} days</div>
-          </div>
-        </Card>
+      {/* Badges Earned */}
+      <div style={{ position: 'absolute', left: 40, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MetricCard theme="red" title="Badges Earned" value={`${earnedCount} / ${badges.length}`} delay={0.2} />
       </div>
 
-      {/* Badge grid */}
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 badge-grid">
-          {badges.map((badge) => (
-            <Card key={badge.id}>
-              <div className="space-y-3">
-                {/* Icon */}
-                <div className="text-center">
-                  {badge.earned ? (
+      {/* Total Streak Days */}
+      <div style={{ position: 'absolute', left: 430, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MetricCard theme="orange" title="Total Streak Days" value={isConnected ? `${totalStreakDays}` : 'N/A'} delay={0.3} />
+      </div>
+
+      {/* Longest Streak */}
+      <div style={{ position: 'absolute', left: 820, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+        <MetricCard theme="purple" title="Longest Streak" value={isConnected ? `${longestStreak} days` : 'N/A'} delay={0.4} />
+      </div>
+
+      {/* Badge grid — large card area with blob + glow */}
+      <div style={{ position: 'absolute', left: 40, top: 290, width: 1200, height: 620, animation: slideUp(0.5) }}>
+        <div style={{ position: 'relative', width: 1200, height: 620 }}>
+          <MainCardBlob idPrefix="ach_badges" top={-50} />
+
+          {/* Top-left edge glow */}
+          <div style={abs({ width: 250, height: 250, top: -30, left: -30, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(20px)', pointerEvents: 'none' })} />
+          {/* Bottom-right corner glow */}
+          <div style={abs({ width: 220, height: 220, bottom: -20, right: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,40,.4), transparent 60%)', filter: 'blur(25px)', pointerEvents: 'none' })} />
+
+          {/* Card body */}
+          <div style={{ position: 'relative', width: '100%', height: '85%', borderRadius: 85, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
+            <div style={abs({ inset: 0, ...cardBackground })} />
+            <div style={abs({ inset: 0, ...cardBackdrop })} />
+
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', padding: '48px 80px' }}>
+              <h2 style={{ ...typography.heading2, marginBottom: 32 }}>NFT Badge Collection</h2>
+
+              {loading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                  <span style={{ fontFamily: FONT_HEADING, fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>Loading badges…</span>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 24, flex: 1 }}>
+                  {badges.map((badge, i) => (
                     <div
-                      className="text-4xl inline-block"
+                      key={badge.id}
                       style={{
-                        filter: 'drop-shadow(0 0 8px rgba(108,60,225,0.5))'
+                        background: badge.earned ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                        borderRadius: 30, padding: '28px 20px',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                        border: badge.earned ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(255,255,255,0.05)',
+                        transition: 'transform 0.25s ease, background 0.25s ease',
+                        cursor: 'pointer', animation: slideIn(0.6 + i * 0.08),
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = badge.earned ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'; }}
                     >
-                      {badge.icon}
+                      <span style={{ fontSize: 48, filter: badge.earned ? 'drop-shadow(0 0 12px rgba(108,60,225,0.5))' : 'grayscale(100%)', opacity: badge.earned ? 1 : 0.35 }}>{badge.icon}</span>
+                      <span style={{ fontFamily: FONT_HEADING, fontWeight: 800, fontSize: 16, color: badge.earned ? '#fff' : 'rgba(255,255,255,0.35)', textAlign: 'center' }}>{badge.name}</span>
+                      <span style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: badge.earned ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: '1.4' }}>{badge.description}</span>
+
+                      {badge.earned ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(144,177,113,0.2)', color: '#90B171', fontSize: 12, fontWeight: 700, fontFamily: FONT_HEADING, borderRadius: 20, padding: '4px 12px' }}>✓ Earned</span>
+                      ) : (
+                        <div style={{ width: '100%' }}>
+                          <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
+                            <div style={{ height: '100%', width: `${badge.progress}%`, background: 'linear-gradient(90deg, #8B5CF6, #A78BFA)', borderRadius: 3, transition: 'width 0.6s ease' }} />
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: FONT_HEADING, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>{badge.progress}%</span>
+                            <span style={{ fontSize: 14, opacity: 0.3 }}>🔒</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="text-4xl inline-block grayscale opacity-40">
-                      {badge.icon}
-                    </div>
-                  )}
+                  ))}
                 </div>
-
-                {/* Name and description */}
-                <div className="text-center">
-                  <h3
-                    className={`text-lg font-display font-bold ${
-                      badge.earned ? 'text-white' : 'text-white/40'
-                    }`}
-                  >
-                    {badge.name}
-                  </h3>
-                  <p
-                    className={`text-sm ${
-                      badge.earned ? 'text-white/60' : 'text-white/30'
-                    }`}
-                  >
-                    {badge.description}
-                  </p>
-                </div>
-
-                {/* Earned badge */}
-                {badge.earned && (
-                  <div className="flex justify-center">
-                    <span className="inline-flex items-center gap-1 bg-green-400/20 text-green-400 text-xs rounded-full px-2 py-0.5">
-                      <span>✓</span>
-                      <span>Earned</span>
-                    </span>
-                  </div>
-                )}
-
-                {/* Transaction hash */}
-                {badge.earned && badge.txHash && explorerUrl && (
-                  <div className="text-center">
-                    <a
-                      href={`${explorerUrl}/tx/${badge.txHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-accent/60 hover:text-accent cursor-pointer transition-colors"
-                    >
-                      Tx: {badge.txHash}
-                    </a>
-                  </div>
-                )}
-
-                {/* Progress bar for locked badges */}
-                {!badge.earned && (
-                  <div className="space-y-2">
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-accent rounded-full transition-all"
-                        style={{ width: `${badge.progress}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-white/40">
-                        {badge.progress}% complete
-                      </span>
-                      <span className="text-white/20">🔒</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-          ))}
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
-
-export default Achievements;
