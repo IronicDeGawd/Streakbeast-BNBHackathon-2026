@@ -11,8 +11,9 @@ import { CARD_SHADOW, FONT_HEADING } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
 import { useStreakBadge, BADGE_THRESHOLDS, BADGE_NAMES } from '../hooks/useStreakBadge';
 import { useWallet } from '../contexts/WalletContext';
+import { BADGE_IMAGES } from '../contracts/badgeMetadata';
 
-const BADGE_ICONS = ['🔥', '⚔️', '👑', '💎', '🛡️'];
+
 const BADGE_DESCRIPTIONS = [
   'Complete your first day',
   'Maintain a 7-day streak',
@@ -80,7 +81,7 @@ export default function Achievements() {
   const badges = BADGE_THRESHOLDS.map((threshold, i) => ({
     id: i,
     name: BADGE_NAMES[i],
-    icon: BADGE_ICONS[i],
+    image: BADGE_IMAGES[i],
     description: BADGE_DESCRIPTIONS[i],
     threshold,
     progress: Math.min(100, Math.round((longestStreak / threshold) * 100)),
@@ -153,7 +154,16 @@ export default function Achievements() {
                       onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = badge.earned ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'; }}
                     >
-                      <span style={{ fontSize: 48, filter: badge.earned ? 'drop-shadow(0 0 12px rgba(108,60,225,0.5))' : 'grayscale(100%)', opacity: badge.earned ? 1 : 0.35 }}>{badge.icon}</span>
+                      <img
+                        src={badge.image}
+                        alt={badge.name}
+                        style={{
+                          width: 80, height: 80, objectFit: 'contain',
+                          filter: badge.earned ? 'drop-shadow(0 0 12px rgba(108,60,225,0.5))' : 'grayscale(100%)',
+                          opacity: badge.earned ? 1 : 0.35,
+                          transition: 'filter 0.3s ease, opacity 0.3s ease',
+                        }}
+                      />
                       <span style={{ fontFamily: FONT_HEADING, fontWeight: 800, fontSize: 16, color: badge.earned ? '#fff' : 'rgba(255,255,255,0.35)', textAlign: 'center' }}>{badge.name}</span>
                       <span style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: badge.earned ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: '1.4' }}>{badge.description}</span>
 
