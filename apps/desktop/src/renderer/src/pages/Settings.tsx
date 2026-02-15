@@ -179,7 +179,7 @@ export default function Settings() {
       </div>
 
       {/* Preferences card */}
-      <div style={{ position: 'absolute', left: 420, top: 470, width: 820, height: 320, animation: slideUp(0.5) }}>
+      <div style={{ position: 'absolute', left: 420, top: 540, width: 820, height: 320, animation: slideUp(0.5) }}>
         <div style={{ position: 'relative', width: 820, height: 320 }}>
           <div style={abs({ width: 220, height: 220, top: -25, left: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.25), transparent 60%)', filter: 'blur(18px)', pointerEvents: 'none' })} />
           <div style={abs({ width: 200, height: 200, bottom: -18, right: -20, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,40,.35), transparent 60%)', filter: 'blur(22px)', pointerEvents: 'none' })} />
