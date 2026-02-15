@@ -35,6 +35,9 @@ const CARDS_PER_PAGE = 3;
 const VISIBLE_WIDTH = CARD_WIDTH * CARDS_PER_PAGE + CARD_GAP * (CARDS_PER_PAGE - 1);
 const SCROLL_AMOUNT = VISIBLE_WIDTH + CARD_GAP;
 
+/* ── Badge service URL (configurable via env) ── */
+const BADGE_SERVICE_URL = (import.meta as any).env?.VITE_BADGE_SERVICE_URL || 'http://localhost:3001';
+
 /* ── Helpers ── */
 function formatTimeUntilNext(lastCheckIn: number): string {
   if (lastCheckIn === 0) return 'Now';
@@ -97,6 +100,28 @@ function Home(): React.ReactElement {
   }, [account, isConnected, getUserHabits, getHabit, getPool, contract]);
 
   useEffect(() => { fetchHabits(); }, [fetchHabits]);
+
+  /* ── Auto-mint badge check (fire-and-forget) ── */
+  const badgeCheckDone = useRef(false);
+  useEffect(() => {
+    if (!account || !isConnected || habits.length === 0 || badgeCheckDone.current) return;
+    badgeCheckDone.current = true;
+    const longestStreak = habits.reduce((m, h) => Math.max(m, h.longestStreak ?? h.currentStreak), 0);
+    if (longestStreak < 1) return;
+
+    fetch(`${BADGE_SERVICE_URL}/api/check-badges`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userAddress: account, longestStreak }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.minted?.length > 0) {
+          console.log('[AutoMint] Minted badges:', data.minted);
+        }
+      })
+      .catch((err) => console.warn('[AutoMint] Badge service unavailable:', err.message));
+  }, [account, isConnected, habits]);
 
   /* ── Scroll helpers ── */
   const checkScroll = useCallback(() => {
