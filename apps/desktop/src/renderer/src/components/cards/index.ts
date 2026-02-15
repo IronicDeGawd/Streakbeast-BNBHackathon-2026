@@ -4,3 +4,4 @@ export { default as ActivityCard } from "./ActivityCard";
 export { default as RankCard } from "./RankCard";
 export { default as RankRowCard } from "./RankRowCard";
 export { default as LeaderboardMainCard } from "./LeaderboardMainCard";
+export { default as WalletStatusCard } from "./WalletStatusCard";
