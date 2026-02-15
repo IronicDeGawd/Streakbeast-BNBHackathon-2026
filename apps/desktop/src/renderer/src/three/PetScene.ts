@@ -15,35 +15,7 @@ export interface PetSceneSetup {
   dispose: () => void;
 }
 
-/**
- * Creates a gradient background texture for the scene
- * Generates a dark purple gradient from top to bottom
- * 
- * @returns THREE.CanvasTexture with gradient background
- */
-function createGradientBackground(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 256;
-  
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('Failed to get 2D context for gradient background');
-  }
-  
-  // Create vertical linear gradient from top to bottom
-  const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, '#0F0F1A'); // Top - darker purple
-  gradient.addColorStop(1, '#1A1A2E'); // Bottom - lighter purple
-  
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, 256, 256);
-  
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  
-  return texture;
-}
+
 
 /**
  * Creates and configures the complete Three.js scene for the pet display
@@ -56,9 +28,8 @@ export function createPetScene(container: HTMLElement): PetSceneSetup {
   // 1. Create scene
   const scene = new THREE.Scene();
   
-  // 2. Set scene background to dark gradient
-  const backgroundTexture = createGradientBackground();
-  scene.background = backgroundTexture;
+  // 2. Transparent background — the card behind provides the gradient
+  scene.background = null;
   
   // 3. Create camera
   const camera = new THREE.PerspectiveCamera(
@@ -73,8 +44,9 @@ export function createPetScene(container: HTMLElement): PetSceneSetup {
   // 4. Create renderer
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
-    alpha: false
+    alpha: true,
   });
+  renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -102,7 +74,6 @@ export function createPetScene(container: HTMLElement): PetSceneSetup {
    */
   function dispose(): void {
     renderer.dispose();
-    backgroundTexture.dispose();
     if (renderer.domElement.parentElement === container) {
       container.removeChild(renderer.domElement);
     }
