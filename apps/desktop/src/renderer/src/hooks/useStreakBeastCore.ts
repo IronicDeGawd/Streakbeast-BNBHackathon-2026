@@ -296,43 +296,56 @@ export function useStreakBeastCore(): UseStreakBeastCoreReturn {
         throw new Error('Contract not initialized');
       }
 
-      // Get pool participants
+      // Get pool data + pre-load all pools for matching
       const poolData = await contract.getPool(poolId);
       const participants = poolData.participants;
 
-      // Get habit IDs for the pool
-      const leaderboard: LeaderboardEntry[] = [];
+      if (participants.length === 0) return [];
 
-      for (const participant of participants) {
-        // Get user's habits
-        const habitIds = await contract.getUserHabits(participant);
+      // Step 1: Fetch all participant habits in parallel
+      const allHabitIds = await Promise.all(
+        participants.map((p: string) => contract.getUserHabits(p)),
+      );
 
-        // Find habits in this pool and get max streak
+      // Step 2: Collect all unique habit IDs and fetch all habit details in parallel
+      const habitIdSet = new Set<number>();
+      allHabitIds.forEach((ids) => ids.forEach((id: bigint) => habitIdSet.add(Number(id))));
+      const uniqueHabitIds = Array.from(habitIdSet);
+
+      const habitDetails = await Promise.all(
+        uniqueHabitIds.map((id) => contract.getHabit(id)),
+      );
+
+      // Build habit lookup map: habitId -> habitData
+      const habitMap = new Map<number, any>();
+      uniqueHabitIds.forEach((id, idx) => habitMap.set(id, habitDetails[idx]));
+
+      // Step 3: Build leaderboard by matching habits to this pool
+      const targetType = Number(poolData.habitType);
+      const targetStart = Number(poolData.startTime);
+      const targetDuration = Number(poolData.duration);
+
+      const leaderboard: LeaderboardEntry[] = participants.map((participant: string, pIdx: number) => {
+        const habitIds = allHabitIds[pIdx].map((id: bigint) => Number(id));
         let maxStreak = 0;
+
         for (const habitId of habitIds) {
-          const habit = await contract.getHabit(habitId);
+          const habit = habitMap.get(habitId);
+          if (!habit) continue;
 
-          // Check if habit belongs to this pool by comparing type, start time, and duration
-          const habitPoolId = await findPoolIdForHabit(
-            contract,
-            Number(habit.habitType),
-            Number(habit.startTime),
-            Number(habit.duration),
-          );
-
-          if (habitPoolId === poolId) {
+          // Match habit to pool by type, start time, and duration
+          if (
+            Number(habit.habitType) === targetType &&
+            Number(habit.startTime) === targetStart &&
+            Number(habit.duration) === targetDuration
+          ) {
             const streak = Number(habit.currentStreak);
-            if (streak > maxStreak) {
-              maxStreak = streak;
-            }
+            if (streak > maxStreak) maxStreak = streak;
           }
         }
 
-        leaderboard.push({
-          address: participant,
-          streak: maxStreak,
-        });
-      }
+        return { address: participant, streak: maxStreak };
+      });
 
       // Sort by streak descending
       return leaderboard.sort((a, b) => b.streak - a.streak);
@@ -352,39 +365,4 @@ export function useStreakBeastCore(): UseStreakBeastCoreReturn {
     getRewardBalance,
     getLeaderboard,
   };
-}
-
-/**
- * Helper function to find pool ID for a habit
- * Iterates through pools to find matching one
- */
-async function findPoolIdForHabit(
-  contract: StreakBeastCoreContract,
-  habitType: number,
-  startTime: number,
-  duration: number,
-): Promise<number> {
-  // Get next pool ID to determine range
-  const nextPoolId = await contract.nextPoolId();
-  const maxPoolId = Number(nextPoolId);
-
-  // Search through pools
-  for (let poolId = 1; poolId < maxPoolId; poolId++) {
-    try {
-      const pool = await contract.getPool(poolId);
-
-      if (
-        Number(pool.habitType) === habitType &&
-        Number(pool.startTime) === startTime &&
-        Number(pool.duration) === duration
-      ) {
-        return poolId;
-      }
-    } catch (error) {
-      // Pool might not exist, continue
-      continue;
-    }
-  }
-
-  return 0; // Pool not found
 }
