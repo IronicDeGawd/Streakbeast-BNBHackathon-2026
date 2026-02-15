@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { MetricCard } from '../components/cards';
+import { MetricCard, WalletStatusCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
@@ -93,6 +93,12 @@ export default function Achievements() {
       <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>
         Achievements
       </h1>
+
+      {/* Wallet Status — top right */}
+      <div style={{ position: 'absolute', right: 30, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+        <WalletStatusCard />
+      </div>
+
 
       {/* Badges Earned */}
       <div style={{ position: 'absolute', left: 40, top: 85, transform: 'scale(0.9)', transformOrigin: 'top left' }}>

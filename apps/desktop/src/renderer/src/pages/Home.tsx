@@ -6,7 +6,7 @@
  */
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import PetCanvas from '../components/PetCanvas';
-import { MainCard, MetricCard, ActivityCard } from '../components/cards';
+import { MainCard, MetricCard, ActivityCard, WalletStatusCard } from '../components/cards';
 import { slideUp, typography } from '../styles/theme';
 import { STATUS_DONE, STATUS_ACTIVE, EASE_SPRING } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
@@ -168,18 +168,23 @@ function Home(): React.ReactElement {
         </MainCard>
       </div>
 
+      {/* Wallet Status — top right */}
+      <div style={{ position: 'absolute', right: 30, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+        <WalletStatusCard />
+      </div>
+
       {/* BNB at Risk */}
-      <div style={{ position: 'absolute', left: 749, top: 39, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 749, top: 89, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="red" title="BNB at Risk" value={totalStaked} delay={0.3} />
       </div>
 
       {/* Reward Pool */}
-      <div style={{ position: 'absolute', left: 830, top: 242, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 830, top: 292, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="orange" title="Reward Pool" value={`${rewardPool} BNB`} delay={0.5} />
       </div>
 
       {/* Integrity Status */}
-      <div style={{ position: 'absolute', left: 771, top: 438, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 771, top: 488, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="purple" title="Integrity Status" value={integrityPct} delay={0.7} />
       </div>
 

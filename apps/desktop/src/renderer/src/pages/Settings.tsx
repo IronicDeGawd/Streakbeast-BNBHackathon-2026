@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback } from 'react';
-import { MetricCard } from '../components/cards';
+import { MetricCard, WalletStatusCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
@@ -83,6 +83,11 @@ export default function Settings() {
       {/* Page Title */}
       <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>Settings</h1>
 
+      {/* Wallet Status — top right */}
+      <div style={{ position: 'absolute', right: 30, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+        <WalletStatusCard />
+      </div>
+
       {/* Wallet card */}
       <div style={{ position: 'absolute', left: 40, top: 90, width: 650, height: 350, animation: slideUp(0.2) }}>
         <div style={{ position: 'relative', width: 650, height: 350 }}>
@@ -132,7 +137,7 @@ export default function Settings() {
       </div>
 
       {/* Linked Accounts card */}
-      <div style={{ position: 'absolute', left: 730, top: 90, width: 510, height: 350, animation: slideUp(0.3) }}>
+      <div style={{ position: 'absolute', left: 730, top: 140, width: 510, height: 350, animation: slideUp(0.3) }}>
         <div style={{ position: 'relative', width: 510, height: 350 }}>
           <MainCardBlob idPrefix="set_linked" scale={0.7} top={-100} left={-150} />
           <div style={abs({ width: 200, height: 200, top: -25, left: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.25), transparent 60%)', filter: 'blur(18px)', pointerEvents: 'none' })} />

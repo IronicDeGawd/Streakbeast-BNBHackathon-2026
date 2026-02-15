@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RankCard, LeaderboardMainCard } from '../components/cards';
+import { RankCard, LeaderboardMainCard, WalletStatusCard } from '../components/cards';
 import { useStreakBeastCore, type LeaderboardEntry } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
 import { FONT_HEADING } from '../utils/tokens';
@@ -116,26 +116,36 @@ export default function Leaderboard() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Wallet Status — top right */}
+      <div style={{ position: 'absolute', right: -10, top: -45, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+        <WalletStatusCard />
+      </div>
+
       {/* Rank 2 — Purple, left */}
       {top3[1] && (
         <div style={{ position: 'absolute', left: 34, top: 100, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
           <RankCard rank={2} address={shortenAddr(top3[1].address)} earned={top3[1].earned ?? '0 BNB'} delay={0.3} />
         </div>
-      )}
+      )
+      }
 
       {/* Rank 1 — Orange, center */}
-      {top3[0] && (
-        <div style={{ position: 'absolute', left: 436, top: -34, zIndex: 2, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-          <RankCard rank={1} address={shortenAddr(top3[0].address)} earned={top3[0].earned ?? '0 BNB'} delay={0.2} />
-        </div>
-      )}
+      {
+        top3[0] && (
+          <div style={{ position: 'absolute', left: 436, top: -34, zIndex: 2, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+            <RankCard rank={1} address={shortenAddr(top3[0].address)} earned={top3[0].earned ?? '0 BNB'} delay={0.2} />
+          </div>
+        )
+      }
 
       {/* Rank 3 — Red, right */}
-      {top3[2] && (
-        <div style={{ position: 'absolute', left: 781, top: 105, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-          <RankCard rank={3} address={shortenAddr(top3[2].address)} earned={top3[2].earned ?? '0 BNB'} delay={0.4} />
-        </div>
-      )}
+      {
+        top3[2] && (
+          <div style={{ position: 'absolute', left: 781, top: 105, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+            <RankCard rank={3} address={shortenAddr(top3[2].address)} earned={top3[2].earned ?? '0 BNB'} delay={0.4} />
+          </div>
+        )
+      }
 
       {/* Main Leaderboard Card */}
       <div
@@ -156,6 +166,6 @@ export default function Leaderboard() {
           rankData={remaining}
         />
       </div>
-    </div>
+    </div >
   );
 }
