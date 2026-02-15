@@ -51,6 +51,7 @@ export const opBNBMainnet: AppKitNetwork = defineChain({
 createAppKit({
   adapters: [new EthersAdapter()],
   networks: [opBNBTestnet, opBNBMainnet],
+  defaultNetwork: opBNBTestnet,
   projectId: 'f4466d6b6afcca9abc283f0cc3712313',
   metadata: {
     name: 'StreakBeast',
@@ -61,4 +62,5 @@ createAppKit({
   features: {
     analytics: false,
   },
+  allowUnsupportedChain: false,
 });
