@@ -1,218 +1,125 @@
-import React, { useRef, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import anime from 'animejs';
-
 /**
- * Navigation item interface
+ * Sidebar — Vertical orange blob navigation bar.
+ * Adapted from UI prototype for react-router-dom.
  */
-interface NavItem {
-  path: string;
-  label: string;
-  icon: React.ReactNode;
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { HiHome } from 'react-icons/hi';
+import { HiTrophy, HiClock, HiStar, HiChatBubbleBottomCenter, HiCog6Tooth } from 'react-icons/hi2';
+
+const NAV_ITEMS = [
+  { key: 'Dashboard', path: '/', Icon: HiHome },
+  { key: 'Stake', path: '/stake', Icon: HiClock },
+  { key: 'Leaderboard', path: '/leaderboard', Icon: HiTrophy },
+  { key: 'Achievements', path: '/achievements', Icon: HiStar },
+  { key: 'Coach', path: '/coach', Icon: HiChatBubbleBottomCenter },
+  { key: 'Settings', path: '/settings', Icon: HiCog6Tooth },
+] as const;
+
+interface SidebarProps {
+  delay?: number;
 }
 
-/**
- * Navigation items configuration with inline SVG icons
- */
-const navItems: NavItem[] = [
-  {
-    path: '/',
-    label: 'Home',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    )
-  },
-  {
-    path: '/stake',
-    label: 'Stake',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
-        <circle cx="12" cy="12" r="2" fill="currentColor" />
-      </svg>
-    )
-  },
-  {
-    path: '/leaderboard',
-    label: 'Leaderboard',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-        <path d="M4 22h16" />
-        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-      </svg>
-    )
-  },
-  {
-    path: '/achievements',
-    label: 'Achievements',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    )
-  },
-  {
-    path: '/coach',
-    label: 'Coach',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-        <circle cx="9" cy="10" r="1" fill="currentColor" />
-        <circle cx="15" cy="10" r="1" fill="currentColor" />
-        <path d="M9 14s1 1 3 1 3-1 3-1" />
-      </svg>
-    )
-  },
-  {
-    path: '/settings',
-    label: 'Settings',
-    icon: (
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
-      </svg>
-    )
-  }
-];
-
-/**
- * Sidebar navigation component
- * 
- * Provides primary navigation with animated active state indicators
- * and visual feedback for user location within the app.
- */
-function Sidebar(): React.ReactElement {
+function Sidebar({ delay = 0 }: SidebarProps): React.ReactElement {
   const location = useLocation();
-  const activeItemRef = useRef<HTMLAnchorElement | null>(null);
-
-  /**
-   * Animate active indicator when location changes
-   */
-  useEffect(() => {
-    if (activeItemRef.current) {
-      anime({
-        targets: activeItemRef.current,
-        translateX: ['-10px', '0px'],
-        opacity: [0, 1],
-        easing: 'spring(1, 80, 10, 0)',
-        duration: 800
-      });
-    }
-  }, [location.pathname]);
+  const navigate = useNavigate();
 
   return (
-    <div className="h-full flex flex-col bg-[#0F0F1A] py-6">
-      {/* Logo Area */}
-      <div className="px-6 mb-8">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-accent">
-            StreakBeast
-          </span>
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="text-accent"
-          >
-            <path
-              d="M12 2c-1.5 4-4 6-7 6 4 2 6 4.5 6 8 0-3.5 2-6 6-8-3 0-5.5-2-5-6Z"
-              fill="currentColor"
-            />
-            <path
-              d="M17 8c-1 2-2 3-4 3 2 1 3 2 3 4 0-2 1-3 3-4-2 0-3-1-2-3Z"
-              fill="currentColor"
-            />
-          </svg>
-        </div>
-      </div>
+    <div
+      style={{
+        position: 'absolute',
+        left: 20,
+        top: 29,
+        zIndex: 100,
+        width: 96,
+        height: 630,
+        animation: `cardSlideIn 0.7s cubic-bezier(0.16,1,0.3,1) ${delay}s both`,
+      }}
+    >
+      {/* Two-layer orange blob SVG — stretched to fit 6 items */}
+      <svg
+        width="96"
+        height="800"
+        viewBox="0 0 106 900"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+      >
+        {/* Outer blob */}
+        <path
+          d="M16.03 370C13.98 406 1 810 1.9 838C2.8 852 1.9 855 4 864C6.8 878 13.8 885 25 890C34.7 894 51.9 891 51.9 891C51.9 891 65.6 889 72.6 884C86.9 874 79.8 590 79.8 590C86.3 276 111.3 65 102.7 34C94.1 3 77.7 3 77.7 3L50.8 2C50.8 2 30.5 -4 23.8 30C17.1 64 18.1 334 16.03 370Z"
+          fill="#E08730"
+        />
+        {/* Inner blob */}
+        <path
+          d="M5.07 370C5.08 419 5.06 640 5.06 686C5.06 732 6.86 802 11.22 813C16.1 824 21.5 832 32.7 836C42.4 840 59.4 836 59.4 836C59.4 836 72.9 834 79.7 829C93.6 819 88.5 564 88.5 564C87.3 283 98.2 90 88.9 63C79.6 36 63.3 36 63.3 36L36.6 36C36.6 36 16.3 32 10.5 63C4.7 94 6.2 337 5.07 370Z"
+          fill="#FBA448"
+        />
+      </svg>
 
-      {/* Navigation Items */}
-      <nav className="flex-1 flex flex-col gap-1 px-3">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          
+      {/* Navigation icons overlaid on blob */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 32,
+          pointerEvents: 'none',
+        }}
+      >
+        {NAV_ITEMS.map(({ key, path, Icon }) => {
+          const isActive = location.pathname === path;
           return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium ${
-                  isActive
-                    ? 'bg-accent/10 text-accent border-r-2 border-accent'
-                    : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`
-              }
-              ref={isActive ? activeItemRef : null}
+            <button
+              key={key}
+              onClick={() => navigate(path)}
+              title={key}
+              style={{
+                pointerEvents: 'auto',
+                background: isActive
+                  ? 'rgba(255,255,255,0.18)'
+                  : 'transparent',
+                border: 'none',
+                borderRadius: 16,
+                width: 52,
+                height: 52,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.25s ease',
+                boxShadow: isActive
+                  ? '0 0 18px rgba(255,255,255,0.15)'
+                  : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.transform = 'scale(1.12)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }
+              }}
             >
-              {item.icon}
-              <span>{item.label}</span>
-            </NavLink>
+              <Icon
+                size={26}
+                color={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
+                style={{ transition: 'color 0.2s ease' }}
+              />
+            </button>
           );
         })}
-      </nav>
+      </div>
     </div>
   );
 }
