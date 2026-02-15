@@ -212,10 +212,12 @@ function createRainParticles(count: number): ParticleSystem {
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
   const material = new THREE.PointsMaterial({
-    color: 0x3B82F6,
-    size: 0.04,
+    color: 0x6BB8FF,
+    size: 0.1,
     transparent: true,
-    opacity: 0.5
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
   });
 
   const points = new THREE.Points(geometry, material);

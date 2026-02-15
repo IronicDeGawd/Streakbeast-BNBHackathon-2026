@@ -49,25 +49,35 @@ export function createPetScene(container: HTMLElement): PetSceneSetup {
   renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.5;
   
   // 5. Append renderer to container
   container.appendChild(renderer.domElement);
   
   // 6. Add DirectionalLight - main light source
-  const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1.5);
+  const directionalLight = new THREE.DirectionalLight(0xFFFFFF, 2.0);
   directionalLight.position.set(5, 5, 5);
   scene.add(directionalLight);
+
+  // 6b. Add a fill light from the opposite side
+  const fillLight = new THREE.DirectionalLight(0xFFFFFF, 0.8);
+  fillLight.position.set(-3, 3, -2);
+  scene.add(fillLight);
   
-  // 7. Add HemisphereLight - ambient purple tint from above and dark from below
-  const hemisphereLight = new THREE.HemisphereLight(0x8B5CF6, 0x0F0F1A, 0.5);
+  // 7. Add HemisphereLight - ambient lighting for PBR materials
+  const hemisphereLight = new THREE.HemisphereLight(0xFFFFFF, 0x444444, 1.0);
   scene.add(hemisphereLight);
   
   // 8. Add PointLight - rim/accent light
-  const pointLight = new THREE.PointLight(0x8B5CF6, 0.8);
+  const pointLight = new THREE.PointLight(0x8B5CF6, 1.0);
   pointLight.position.set(-3, 2, 4);
   scene.add(pointLight);
+
+  // 9. Add ambient light to ensure PBR materials are visible
+  const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.4);
+  scene.add(ambientLight);
   
   /**
    * Cleanup function to dispose all resources and remove renderer from DOM

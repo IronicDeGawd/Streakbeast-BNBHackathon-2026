@@ -60,6 +60,8 @@ export class PetController {
       if (this.particles) {
         this.particles.update(elapsed);
       }
+      // Gentle Y-axis oscillation to show 3D depth
+      this.pet.rotation.y = Math.sin(elapsed * 0.8) * 0.25; // ~±15° sway
       this.sceneSetup.renderer.render(this.sceneSetup.scene, this.sceneSetup.camera);
     };
     animate();
