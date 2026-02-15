@@ -7,11 +7,14 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 987,
+    height: 640,
+    useContentSize: true,
+    minWidth: 960,
+    minHeight: 640,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: '#0F0F1A',
+    backgroundColor: '#251838',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
