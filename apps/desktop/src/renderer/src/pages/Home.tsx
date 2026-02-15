@@ -199,22 +199,22 @@ function Home(): React.ReactElement {
       </div>
 
       {/* BNB at Risk */}
-      <div style={{ position: 'absolute', left: 749, top: 89, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 749, top: 101, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="red" title="BNB at Risk" value={totalStaked} delay={0.3} />
       </div>
 
       {/* Reward Pool */}
-      <div style={{ position: 'absolute', left: 830, top: 292, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 830, top: 304, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="orange" title="Reward Pool" value={`${rewardPool} BNB`} delay={0.5} />
       </div>
 
       {/* Integrity Status */}
-      <div style={{ position: 'absolute', left: 771, top: 488, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 771, top: 500, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="purple" title="Integrity Status" value={integrityPct} delay={0.7} />
       </div>
 
       {/* ── Daily Missions Section ── */}
-      <div style={{ position: 'absolute', left: 97, top: 600, width: VISIBLE_WIDTH, transform: 'scale(0.9)', transformOrigin: 'top left', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', left: 97, top: 665, width: VISIBLE_WIDTH, transform: 'scale(0.9)', transformOrigin: 'top left', overflow: 'hidden' }}>
         {/* Header row */}
         <div
           style={{
