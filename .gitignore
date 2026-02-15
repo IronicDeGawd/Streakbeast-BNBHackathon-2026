@@ -51,3 +51,6 @@ pnpm-debug.log*
 doc/
 progress.md
 *.docx
+context/
+ui-protype/
+CLAUDE.md

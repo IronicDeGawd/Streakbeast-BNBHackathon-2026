@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,11 +6,14 @@
 
 @layer base {
   body {
-    @apply bg-background text-white font-body;
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', sans-serif;
+    background: #251838;
+    color: white;
+    overflow: hidden;
   }
 
   * {
@@ -23,28 +26,66 @@
   }
 }
 
-@layer utilities {
-  .font-display {
-    font-family: 'Space Grotesk', sans-serif;
-  }
+/* ── Animation Keyframes (used by sidebar, cards, and page transitions) ── */
 
-  .font-body {
-    font-family: 'DM Sans', sans-serif;
+@keyframes cardSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-40px);
   }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
 
-  .bg-background {
-    background-color: #0F0F1A;
+@keyframes cardSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
   }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .bg-card {
-    background-color: #1A1A2E;
+@keyframes mainReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
   }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-  .text-purple-500 {
-    color: #8B5CF6;
-  }
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+}
 
-  .text-purple-600 {
-    color: #6C3CE1;
-  }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+/* ── Scrollbar Styling ── */
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
 }
