@@ -22,7 +22,7 @@ import {
   modal,
 } from '@reown/appkit/react';
 import type { AppKitNetwork } from '@reown/appkit/networks';
-import { opBNBTestnet, opBNBMainnet } from '../config/appkit';
+import { opBNBTestnet } from '../config/appkit';
 
 /**
  * EIP-1193 provider type for useAppKitProvider generic
@@ -65,7 +65,6 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
  */
 const chainMap: Record<number, AppKitNetwork> = {
   5611: opBNBTestnet,
-  204: opBNBMainnet,
 };
 
 /**

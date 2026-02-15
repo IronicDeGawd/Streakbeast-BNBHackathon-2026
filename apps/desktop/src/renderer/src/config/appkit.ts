@@ -24,33 +24,12 @@ export const opBNBTestnet: AppKitNetwork = defineChain({
 });
 
 /**
- * opBNB Mainnet chain definition (chainId 204)
- */
-export const opBNBMainnet: AppKitNetwork = defineChain({
-  id: 204,
-  caipNetworkId: 'eip155:204',
-  chainNamespace: 'eip155',
-  name: 'opBNB Mainnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'BNB',
-    symbol: 'BNB',
-  },
-  rpcUrls: {
-    default: { http: ['https://opbnb-mainnet-rpc.bnbchain.org'] },
-  },
-  blockExplorers: {
-    default: { name: 'opBNBScan', url: 'https://opbnbscan.com' },
-  },
-});
-
-/**
  * Initialize Reown AppKit with EthersAdapter
  * This must run once before any React component renders
  */
 createAppKit({
   adapters: [new EthersAdapter()],
-  networks: [opBNBTestnet, opBNBMainnet],
+  networks: [opBNBTestnet],
   defaultNetwork: opBNBTestnet,
   projectId: 'f4466d6b6afcca9abc283f0cc3712313',
   metadata: {

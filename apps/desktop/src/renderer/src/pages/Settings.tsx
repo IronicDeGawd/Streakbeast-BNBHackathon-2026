@@ -21,9 +21,7 @@ function getNetworkName(chainId: number | null): string {
   if (!chainId) return 'Not connected';
   switch (chainId) {
     case 5611: return 'opBNB Testnet';
-    case 204: return 'opBNB Mainnet';
     case 97: return 'BNB Testnet';
-    case 56: return 'BNB Mainnet';
     default: return `Chain ${chainId}`;
   }
 }
