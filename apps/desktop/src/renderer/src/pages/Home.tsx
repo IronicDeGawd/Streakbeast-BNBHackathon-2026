@@ -6,7 +6,7 @@
  */
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import PetCanvas from '../components/PetCanvas';
-import { MainCard, MetricCard, ActivityCard, WalletStatusCard } from '../components/cards';
+import { MainCard, MetricCard, ActivityCard } from '../components/cards';
 import { slideUp, typography } from '../styles/theme';
 import { STATUS_DONE, STATUS_ACTIVE, EASE_SPRING } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
@@ -191,11 +191,6 @@ function Home(): React.ReactElement {
             <PetCanvas streakDays={currentStreak} isActive={hasActiveHabit} />
           </div>
         </MainCard>
-      </div>
-
-      {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
-        <WalletStatusCard />
       </div>
 
       {/* BNB at Risk */}

@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { RankCard, LeaderboardMainCard, WalletStatusCard } from '../components/cards';
+import { RankCard, LeaderboardMainCard } from '../components/cards';
 import { useStreakBeastCore, type LeaderboardEntry } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
 import { FONT_HEADING } from '../utils/tokens';
@@ -116,10 +116,6 @@ export default function Leaderboard() {
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 40, top: -45, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
-        <WalletStatusCard />
-      </div>
 
       {/* Rank 2 — Purple, left */}
       {top3[1] && (

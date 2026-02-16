@@ -7,7 +7,7 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 987,
+    width: 960,
     height: 640,
     useContentSize: true,
     minWidth: 960,
@@ -23,8 +23,21 @@ function createWindow(): void {
     }
   })
 
+  // Lock aspect ratio to 960:640 (3:2) so the window scales proportionally
+  mainWindow.setAspectRatio(960 / 640)
+
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
+    // Log initial size
+    const [w, h] = mainWindow!.getSize()
+    const [cw, ch] = mainWindow!.getContentSize()
+    console.log(`[WindowSize] Initial  → window: ${w}x${h}  content: ${cw}x${ch}`)
+  })
+
+  mainWindow.on('resize', () => {
+    const [w, h] = mainWindow!.getSize()
+    const [cw, ch] = mainWindow!.getContentSize()
+    console.log(`[WindowSize] Resized  → window: ${w}x${h}  content: ${cw}x${ch}`)
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
