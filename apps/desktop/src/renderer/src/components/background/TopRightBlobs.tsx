@@ -5,12 +5,12 @@ export default function TopRightBlobs() {
       fill="none"
       style={{
         position: "fixed",
-        top: -160,
-        right: -155,
-        width: 520,
-        height: 480,
+        top: -100,
+        right: -80,
+        width: 420,
+        height: 400,
         pointerEvents: "none",
-        transform: "scale(0.8)",
+        transform: "scale(0.65)",
         transformOrigin: "top right",
       }}
     >

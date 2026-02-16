@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useRef, useEffect } from 'react';
-import { MetricCard, WalletStatusCard } from '../components/cards';
+import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
@@ -53,20 +53,16 @@ export default function Coach() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Page Title */}
-      <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>AI Coach</h1>
+      <h1 style={{ position: 'absolute', left: 40, top: 70, ...typography.heading1, animation: slideUp(0.1) }}>AI Coach</h1>
 
-      {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
-        <WalletStatusCard />
-      </div>
 
       {/* AI Status */}
-      <div style={{ position: 'absolute', left: 840, top: 100, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 840, top: 140, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="purple" title="Coach Status" value="✨ Active" delay={0.3} />
       </div>
 
       {/* Main chat card with blob + glow */}
-      <div style={{ position: 'absolute', left: 40, top: 90, width: 780, height: 810, animation: slideUp(0.2) }}>
+      <div style={{ position: 'absolute', left: 40, top: 130, width: 780, height: 810, animation: slideUp(0.2) }}>
         <div style={{ position: 'relative', width: 780, height: 810 }}>
           <MainCardBlob idPrefix="coach_chat" top={10} />
           <div style={abs({ width: 250, height: 250, top: -30, left: -30, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(20px)', pointerEvents: 'none' })} />
@@ -138,9 +134,9 @@ export default function Coach() {
       </div>
 
       {/* Quick Actions (right side) */}
-      <h3 style={{ position: 'absolute', left: 860, top: 280, ...typography.heading3, animation: slideUp(0.4) }}>Quick Actions</h3>
+      <h3 style={{ position: 'absolute', left: 860, top: 320, ...typography.heading3, animation: slideUp(0.4) }}>Quick Actions</h3>
       {QUICK_ACTIONS.map((action, i) => (
-        <div key={action} style={{ position: 'absolute', left: 860, top: 340 + i * 72, animation: slideIn(0.5 + i * 0.08) }}>
+        <div key={action} style={{ position: 'absolute', left: 860, top: 380 + i * 72, animation: slideIn(0.5 + i * 0.08) }}>
           <button
             onClick={() => sendMessage(action)}
             style={{
@@ -158,7 +154,7 @@ export default function Coach() {
       ))}
 
       {/* Streak info card */}
-      <div style={{ position: 'absolute', left: 860, top: 650, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 860, top: 690, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="orange" title="Your Streak" value="🔥 7 days" delay={0.6} />
       </div>
     </div>

@@ -5,11 +5,13 @@ export default function BottomLeftBlobs() {
       fill="none"
       style={{
         position: "fixed",
-        bottom: -160,
-        left: -200,
-        width: 550,
-        height: 480,
+        bottom: -130,
+        left: -100,
+        width: 480,
+        height: 440,
         pointerEvents: "none",
+        transform: "scale(0.75)",
+        transformOrigin: "bottom left",
       }}
     >
       <path

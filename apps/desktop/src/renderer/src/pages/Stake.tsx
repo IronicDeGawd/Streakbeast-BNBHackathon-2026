@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState } from 'react';
-import { MetricCard, ActivityCard, WalletStatusCard } from '../components/cards';
+import { MetricCard, ActivityCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
@@ -62,19 +62,15 @@ export default function Stake() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Page Title */}
-      <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>Stake & Commit</h1>
+      <h1 style={{ position: 'absolute', left: 40, top: 70, ...typography.heading1, animation: slideUp(0.1) }}>Stake & Commit</h1>
 
-      {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
-        <WalletStatusCard />
-      </div>
 
       {/* Main hero card — Stake form with blob + glow */}
-      <div style={{ position: 'absolute', left: 40, top: 90, width: 720, height: 540, animation: slideUp(0.2) }}>
+      <div style={{ position: 'absolute', left: 40, top: 130, width: 720, height: 540, animation: slideUp(0.2) }}>
         <div style={{ position: 'relative', width: 720, height: 540 }}>
           <MainCardBlob idPrefix="stake_hero" top={-10} />
-          <div style={abs({ width: 250, height: 250, top: -30, left: -30, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(20px)', pointerEvents: 'none' })} />
-          <div style={abs({ width: 220, height: 220, bottom: -20, right: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,40,.4), transparent 60%)', filter: 'blur(25px)', pointerEvents: 'none' })} />
+          <div style={abs({ width: 200, height: 200, top: -24, left: -24, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(16px)', pointerEvents: 'none' })} />
+          <div style={abs({ width: 176, height: 176, bottom: -16, right: -20, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,40,.4), transparent 60%)', filter: 'blur(20px)', pointerEvents: 'none' })} />
 
           <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 85, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
             <div style={abs({ inset: 0, ...cardBackground })} />
@@ -132,7 +128,7 @@ export default function Stake() {
       </div>
 
       {/* Habit selection label */}
-      <h2 style={{ position: 'absolute', left: 800, top: 140, ...typography.heading3, animation: slideUp(0.3) }}>Choose Your Habit</h2>
+      <h2 style={{ position: 'absolute', left: 800, top: 180, ...typography.heading3, animation: slideUp(0.3) }}>Choose Your Habit</h2>
 
       {/* Habit cards — 2×3 grid */}
       {HABIT_TYPES.map((habit, i) => {
@@ -145,7 +141,7 @@ export default function Stake() {
             style={{
               position: 'absolute',
               left: 780 + col * 240,
-              top: 190 + row * 165,
+              top: 230 + row * 165,
               transform: `scale(0.65)${isSelected ? ' translateY(-4px)' : ''}`,
               transformOrigin: 'top left', cursor: 'pointer',
               opacity: isSelected ? 1 : 0.75, transition: 'all 0.25s ease',
@@ -163,12 +159,12 @@ export default function Stake() {
       })}
 
       {/* Summary */}
-      <div style={{ position: 'absolute', left: 40, top: 660, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 40, top: 700, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="orange" title="Summary" value={`${selectedHabitName} · ${stakeAmount} BNB · ${selectedDuration}d`} delay={0.8} valueFontSize={22} />
       </div>
 
       {/* Stake button */}
-      <div style={{ position: 'absolute', left: 440, top: 700, animation: slideUp(0.9), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+      <div style={{ position: 'absolute', left: 440, top: 740, animation: slideUp(0.9), display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
         <button
           onClick={handleStake}
           disabled={!canStake}

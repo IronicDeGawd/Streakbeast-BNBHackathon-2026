@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { WalletProvider } from './contexts/WalletContext';
 import Layout from './components/Layout';
 import Sidebar from './components/Sidebar';
+import { WalletStatusCard } from './components/cards';
 import Home from './pages/Home';
 import Stake from './pages/Stake';
 import Leaderboard from './pages/Leaderboard';
@@ -42,6 +43,11 @@ function AppContent(): React.ReactElement {
             overflow: 'hidden',
           }}
         >
+          {/* Global Wallet Status — top right of every page */}
+          <div style={{ position: 'absolute', right: 210, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
+            <WalletStatusCard />
+          </div>
+
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/stake" element={<Stake />} />

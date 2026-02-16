@@ -3,7 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback } from 'react';
-import { MetricCard, WalletStatusCard } from '../components/cards';
+import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
@@ -79,15 +79,11 @@ export default function Settings() {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Page Title */}
-      <h1 style={{ position: 'absolute', left: 40, top: 30, ...typography.heading1, animation: slideUp(0.1) }}>Settings</h1>
+      <h1 style={{ position: 'absolute', left: 40, top: 70, ...typography.heading1, animation: slideUp(0.1) }}>Settings</h1>
 
-      {/* Wallet Status — top right */}
-      <div style={{ position: 'absolute', right: 80, top: 15, transform: 'scale(0.9)', transformOrigin: 'top right', zIndex: 5 }}>
-        <WalletStatusCard />
-      </div>
 
       {/* Wallet card */}
-      <div style={{ position: 'absolute', left: 40, top: 90, width: 650, height: 350, animation: slideUp(0.2) }}>
+      <div style={{ position: 'absolute', left: 40, top: 130, width: 650, height: 350, animation: slideUp(0.2) }}>
         <div style={{ position: 'relative', width: 650, height: 350 }}>
           <div style={abs({ width: 250, height: 250, top: -30, left: -30, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(20px)', pointerEvents: 'none' })} />
           <div style={abs({ width: 220, height: 220, bottom: -20, right: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,40,.4), transparent 60%)', filter: 'blur(25px)', pointerEvents: 'none' })} />
@@ -135,7 +131,7 @@ export default function Settings() {
       </div>
 
       {/* Linked Accounts card */}
-      <div style={{ position: 'absolute', left: 730, top: 140, width: 510, height: 350, animation: slideUp(0.3) }}>
+      <div style={{ position: 'absolute', left: 730, top: 180, width: 510, height: 350, animation: slideUp(0.3) }}>
         <div style={{ position: 'relative', width: 510, height: 350 }}>
           <MainCardBlob idPrefix="set_linked" scale={0.7} top={-100} left={-150} />
           <div style={abs({ width: 200, height: 200, top: -25, left: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.25), transparent 60%)', filter: 'blur(18px)', pointerEvents: 'none' })} />
@@ -172,12 +168,12 @@ export default function Settings() {
       </div>
 
       {/* OpenClaw Agent */}
-      <div style={{ position: 'absolute', left: 40, top: 470, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
+      <div style={{ position: 'absolute', left: 40, top: 510, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
         <MetricCard theme="purple" title="OpenClaw Agent" value="● Active" delay={0.5} />
       </div>
 
       {/* Preferences card */}
-      <div style={{ position: 'absolute', left: 420, top: 540, width: 820, height: 320, animation: slideUp(0.5) }}>
+      <div style={{ position: 'absolute', left: 420, top: 580, width: 820, height: 320, animation: slideUp(0.5) }}>
         <div style={{ position: 'relative', width: 820, height: 320 }}>
           <div style={abs({ width: 220, height: 220, top: -25, left: -25, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.25), transparent 60%)', filter: 'blur(18px)', pointerEvents: 'none' })} />
           <div style={abs({ width: 200, height: 200, bottom: -18, right: -20, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,140,40,.35), transparent 60%)', filter: 'blur(22px)', pointerEvents: 'none' })} />
@@ -207,7 +203,7 @@ export default function Settings() {
       </div>
 
       {/* Verification */}
-      <div style={{ position: 'absolute', left: 40, top: 660, animation: slideUp(0.7) }}>
+      <div style={{ position: 'absolute', left: 40, top: 700, animation: slideUp(0.7) }}>
         <MetricCard theme="red" title="Verification" value="Daily 11 PM UTC" delay={0.7} />
       </div>
     </div>
