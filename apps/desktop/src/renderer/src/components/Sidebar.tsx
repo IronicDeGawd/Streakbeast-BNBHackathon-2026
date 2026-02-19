@@ -2,7 +2,7 @@
  * Sidebar — Vertical orange blob navigation bar.
  * Adapted from UI prototype for react-router-dom.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { HiHome } from 'react-icons/hi';
 import { HiTrophy, HiClock, HiStar, HiChatBubbleBottomCenter, HiCog6Tooth } from 'react-icons/hi2';
@@ -23,6 +23,7 @@ interface SidebarProps {
 function Sidebar({ delay = 0 }: SidebarProps): React.ReactElement {
   const location = useLocation();
   const navigate = useNavigate();
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
 
   return (
     <div
@@ -75,48 +76,73 @@ function Sidebar({ delay = 0 }: SidebarProps): React.ReactElement {
       >
         {NAV_ITEMS.map(({ key, path, Icon }) => {
           const isActive = location.pathname === path;
+          const showTooltip = hoveredKey === key;
           return (
-            <button
-              key={key}
-              onClick={() => navigate(path)}
-              title={key}
-              style={{
-                pointerEvents: 'auto',
-                background: isActive
-                  ? 'rgba(255,255,255,0.18)'
-                  : 'transparent',
-                border: 'none',
-                borderRadius: 16,
-                width: 52,
-                height: 52,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                boxShadow: isActive
-                  ? '0 0 18px rgba(255,255,255,0.15)'
-                  : 'none',
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                  e.currentTarget.style.transform = 'scale(1.12)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }
-              }}
-            >
-              <Icon
-                size={26}
-                color={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
-                style={{ transition: 'color 0.2s ease' }}
-              />
-            </button>
+            <div key={key} style={{ position: 'relative', pointerEvents: 'auto' }}>
+              <button
+                onClick={() => navigate(path)}
+                style={{
+                  background: isActive
+                    ? 'rgba(255,255,255,0.18)'
+                    : 'transparent',
+                  border: 'none',
+                  borderRadius: 16,
+                  width: 52,
+                  height: 52,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.25s ease',
+                  boxShadow: isActive
+                    ? '0 0 18px rgba(255,255,255,0.15)'
+                    : 'none',
+                }}
+                onMouseEnter={(e) => {
+                  setHoveredKey(key);
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.transform = 'scale(1.12)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  setHoveredKey(null);
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }
+                }}
+              >
+                <Icon
+                  size={26}
+                  color={isActive ? '#fff' : 'rgba(255,255,255,0.5)'}
+                  style={{ transition: 'color 0.2s ease' }}
+                />
+              </button>
+              {showTooltip && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    left: 62,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'linear-gradient(135deg, #E08730, #FBA448)',
+                    borderRadius: 12,
+                    padding: '7px 16px',
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    color: '#fff',
+                    whiteSpace: 'nowrap',
+                    pointerEvents: 'none',
+                    boxShadow: '0 4px 20px rgba(224,135,48,0.4)',
+                    zIndex: 200,
+                  }}
+                >
+                  {key}
+                </span>
+              )}
+            </div>
           );
         })}
       </div>
