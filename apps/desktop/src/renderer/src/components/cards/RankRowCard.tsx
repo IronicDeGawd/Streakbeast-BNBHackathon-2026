@@ -35,7 +35,7 @@ export default function RankRowCard({
   habitType,
 }: RankRowCardProps) {
   const colorIdx = (rank - 4) % ROW_COLORS.length;
-  const colors = ROW_COLORS[colorIdx];
+  const colors = ROW_COLORS[colorIdx] ?? ROW_COLORS[0]!;
   const filterId = `f_row_${rank}`;
 
   return (

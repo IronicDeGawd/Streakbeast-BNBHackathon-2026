@@ -1,4 +1,8 @@
+import { useRef } from "react";
 import { abs } from "../../utils/styles";
+import { useBlobBreathing } from "../../hooks/useAnimations";
+
+const MAIN_BLOB_D = "M44.5507 209.575C-40.294 90.6664 160.316 -50.523 233.816 44.5991C307.315 139.721 764.623 351.988 659.762 414.915C554.901 477.842 -23.9529 646.893 32.5684 480.736C89.0897 314.579 129.395 328.484 44.5507 209.575Z";
 
 interface MainCardBlobProps {
   /** unique prefix to avoid SVG filter/gradient id collisions when multiple blobs exist on a page */
@@ -14,6 +18,10 @@ interface MainCardBlobProps {
 export default function MainCardBlob({ idPrefix = "main", top = -90, left = -70, scale = 1 }: MainCardBlobProps) {
   const filterId = `filter_${idPrefix}`;
   const paintId = `paint_${idPrefix}`;
+
+  const blobRef = useRef<SVGPathElement>(null);
+  useBlobBreathing(blobRef, MAIN_BLOB_D, { intensity: 6, duration: 7000 });
+
   return (
     <svg
       width="700"
@@ -80,7 +88,8 @@ export default function MainCardBlob({ idPrefix = "main", top = -90, left = -70,
       </defs>
       <g filter={`url(#${filterId})`}>
         <path
-          d="M44.5507 209.575C-40.294 90.6664 160.316 -50.523 233.816 44.5991C307.315 139.721 764.623 351.988 659.762 414.915C554.901 477.842 -23.9529 646.893 32.5684 480.736C89.0897 314.579 129.395 328.484 44.5507 209.575Z"
+          ref={blobRef}
+          d={MAIN_BLOB_D}
           fill={`url(#${paintId})`}
           fillOpacity="0.6"
         />

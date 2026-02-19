@@ -2,8 +2,10 @@
  * RankCard — Unified podium rank card (top 3).
  * Replaces RankCardOrange (rank 1), RankCardPurple (rank 2), RankCardRed (rank 3).
  */
+import { useRef } from "react";
 import { abs } from "../../utils/styles";
 import { RANK_THEMES, reveal, typography, type RankPosition } from "../../styles/theme";
+import { useBlobBreathing, useParallaxHover } from "../../hooks/useAnimations";
 
 interface RankCardProps {
   rank: RankPosition;
@@ -22,8 +24,14 @@ export default function RankCard({
   const blobFilterId = `f0_rank${rank}`;
   const bodyFilterId = `f1_rank${rank}`;
 
+  const blobRef = useRef<SVGPathElement>(null);
+  const parallaxRef = useParallaxHover(12);
+
+  useBlobBreathing(blobRef, t.blobPath, { intensity: 5, duration: 6000 });
+
   return (
     <div
+      ref={parallaxRef}
       style={{
         position: "relative",
         width: t.width,
@@ -40,18 +48,19 @@ export default function RankCard({
         style={abs({ top: 0, left: 0, width: "100%", height: "100%" })}
       >
         {/* Background blob */}
-        <g filter={`url(#${blobFilterId})`}>
+        <g filter={`url(#${blobFilterId})`} data-depth="blob">
           <path
+            ref={blobRef}
             d={t.blobPath}
             fill={t.blobGradient ? `url(#${t.blobGradient.id})` : t.blobColor}
           />
         </g>
         {/* Card pill */}
-        <g filter={`url(#${bodyFilterId})`}>
+        <g filter={`url(#${bodyFilterId})`} data-depth="body">
           <path d={t.bodyPath} fill={t.bodyColor} />
         </g>
         {/* Circle badge */}
-        <circle cx={t.circleCx} cy={t.circleCy} r="50" fill={t.badgeColor} />
+        <circle cx={t.circleCx} cy={t.circleCy} r="50" fill={t.badgeColor} data-depth="body" />
         <defs>
           <filter id={blobFilterId} x={t.blobFilter.x} y={t.blobFilter.y} width={t.blobFilter.width} height={t.blobFilter.height} filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
