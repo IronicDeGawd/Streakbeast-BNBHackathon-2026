@@ -28,6 +28,21 @@ skill/              Python AI agent for autonomous habit verification
 | Auth (OAuth flows) | https://streakbeast-bnb-hackathon-2026-auth.vercel.app |
 | Badge Service (NFT minting API) | https://streakbeast-bnb-hackathon-2026-badg.vercel.app |
 
+## Running Unsigned Releases
+
+**macOS** — remove the quarantine flag after installing:
+```bash
+xattr -cr /Applications/StreakBeast.app
+```
+
+**Windows** — SmartScreen will block the unsigned installer. Click **More info** → **Run anyway**.
+
+**Linux** — make the AppImage executable and run:
+```bash
+chmod +x StreakBeast-*.AppImage
+./StreakBeast-*.AppImage
+```
+
 ## Quick Start
 
 **Prerequisites:** Node.js >= 20, pnpm >= 8
