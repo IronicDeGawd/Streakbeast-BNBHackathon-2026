@@ -13,7 +13,7 @@ import React, {
   useRef,
   ReactNode,
 } from 'react';
-import { BrowserProvider, JsonRpcSigner, formatEther } from 'ethers';
+import { BrowserProvider, JsonRpcProvider, JsonRpcSigner, formatEther } from 'ethers';
 import {
   useAppKitAccount,
   useAppKitNetwork,
@@ -35,6 +35,7 @@ interface Eip1193Provider {
  * Target chain — opBNB Testnet
  */
 const TARGET_CHAIN_ID = 5611;
+const OPBNB_RPC_URL = 'https://opbnb-testnet-rpc.bnbchain.org';
 
 /**
  * WalletContext type definition
@@ -106,14 +107,6 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
           setProvider(ethersProvider);
           setSigner(ethersSigner);
         }
-
-        // Fetch balance
-        if (address && !cancelled) {
-          const balanceWei = await ethersProvider.getBalance(address);
-          if (!cancelled) {
-            setBalance(formatEther(balanceWei));
-          }
-        }
       } catch (err) {
         console.error('Failed to build ethers provider:', err);
         if (!cancelled) {
@@ -130,6 +123,30 @@ export function WalletProvider({ children }: WalletProviderProps): React.ReactEl
       cancelled = true;
     };
   }, [walletProvider, appkitConnected, appkitChainId, address]);
+
+  // Fetch balance via direct RPC (bypasses WalletConnect relay for reliability)
+  useEffect(() => {
+    if (!address || !appkitConnected) {
+      setBalance('0');
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchBalance() {
+      try {
+        const rpc = new JsonRpcProvider(OPBNB_RPC_URL);
+        const balanceWei = await rpc.getBalance(address!);
+        if (!cancelled) setBalance(formatEther(balanceWei));
+      } catch (err) {
+        console.error('Failed to fetch balance via RPC:', err);
+      }
+    }
+
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 30_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [address, appkitConnected]);
 
   // Auto-switch to opBNB Testnet when connected on wrong network
   // Uses wallet_addEthereumChain first (required for WalletConnect + mobile wallets)
