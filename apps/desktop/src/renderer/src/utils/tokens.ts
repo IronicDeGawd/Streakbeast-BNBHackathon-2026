@@ -53,8 +53,8 @@ export const STATUS_DONE = "#90B171";
 export const STATUS_ACTIVE = "#E57953";
 
 // ── Fonts ──
-export const FONT_HEADING = "'Inter'";
-export const FONT_BODY = "'Inter'";
+export const FONT_HEADING = "'Fredoka', sans-serif";
+export const FONT_BODY = "'Space Grotesk', sans-serif";
 
 // ── Animation easings ──
 export const EASE_SPRING = "cubic-bezier(0.16,1,0.3,1)";
