@@ -123,13 +123,17 @@ export default function Coach() {
                   <span style={{ fontSize: 56 }}>⚡</span>
                   <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>OpenClaw Not Running</h3>
                   <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
-                    The AI Coach requires the OpenClaw daemon running locally. Start it to enable habit verification, coaching, and streak analysis.
+                    The AI Coach requires the OpenClaw gateway running locally. Install it and register the StreakBeast skill to enable coaching and streak analysis.
                   </p>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 400 }}>
-                    <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px' }}>Quick setup:</p>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 440 }}>
+                    <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>1. Install OpenClaw &amp; start the gateway:</p>
+                    <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#A78BFA', display: 'block', lineHeight: 1.8, marginBottom: 14 }}>
+                      curl -fsSL https://openclaw.ai/install.sh | bash<br/>
+                      openclaw onboard --install-daemon
+                    </code>
+                    <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>2. Copy the skill into OpenClaw:</p>
                     <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#A78BFA', display: 'block', lineHeight: 1.8 }}>
-                      openclaw skill register ./skill<br/>
-                      openclaw daemon start
+                      cp -r ./skill ~/.openclaw/skills/streakbeast
                     </code>
                   </div>
                   <p style={{ fontFamily: FONT_BODY, fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
