@@ -2,7 +2,11 @@
 
 interface ImportMetaEnv {
   readonly VITE_APP_TITLE: string;
-  // Add more env variables as needed
+  readonly VITE_OPENCLAW_URL: string;
+  readonly VITE_OPENCLAW_TOKEN: string;
+  readonly VITE_BADGE_SERVICE_URL: string;
+  readonly VITE_GITHUB_CLIENT_ID: string;
+  readonly VITE_STRAVA_CLIENT_ID: string;
 }
 
 interface ImportMeta {

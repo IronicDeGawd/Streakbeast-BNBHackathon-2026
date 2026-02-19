@@ -1,5 +1,5 @@
 /**
- * Coach — AI chat interface page.
+ * Coach — AI chat interface page powered by OpenClaw.
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useRef, useEffect } from 'react';
@@ -8,8 +8,12 @@ import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
 import { CARD_SHADOW, FONT_HEADING, COLOR_PURPLE_ACCENT } from '../utils/tokens';
+import { useOpenClaw, type OpenClawMessage } from '../hooks/useOpenClaw';
+import { useOpenClawStatus } from '../contexts/OpenClawContext';
+import { useWallet } from '../contexts/WalletContext';
+import { useStreakBeastCore } from '../hooks/useStreakBeastCore';
 
-interface Message {
+interface DisplayMessage {
   id: number;
   text: string;
   sender: 'user' | 'ai';
@@ -17,37 +21,53 @@ interface Message {
 
 const QUICK_ACTIONS = ['How am I doing?', 'Motivation tips', 'Streak analysis', 'Habit suggestions'];
 
-const AI_RESPONSES = [
-  'Great job maintaining your streak! Your consistency in coding is impressive. Keep pushing! 🔥',
-  "Here's a tip: Try to code at the same time every day. Consistency breeds habit formation. ⏰",
-  'Your 7-day streak puts you in the top 20% of StreakBeast users. Amazing work! 🏆',
-  'Consider adding a new habit to diversify your growth. Exercise pairs well with coding! 💪',
-  'Remember: every day you show up is a victory. Your pet is thriving because of your dedication! ✨',
-];
+const WELCOME_MSG = "Hey there! I'm your AI coach powered by OpenClaw. Ask me anything about your habits, streaks, or get motivation tips! 🚀";
 
 export default function Coach() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: 0, text: "Hey there! I'm your AI coach powered by OpenClaw. Ask me anything about your habits, streaks, or get motivation tips! 🚀", sender: 'ai' },
-  ]);
+  const { account, isConnected: walletConnected } = useWallet();
+  const { getUserHabits, getHabit } = useStreakBeastCore();
+  const { isConnected: daemonOnline } = useOpenClawStatus();
+
+  const { sendMessage: openClawSend, messages: openClawMessages, isStreaming, error } = useOpenClaw({
+    model: 'agent:streakbeast',
+    systemPrompt: `You are the StreakBeast AI Coach. The user's wallet address is ${account || 'not connected'}. Help them with habit tracking, motivation, and streak analysis. Be encouraging but concise.`,
+    userId: account || undefined,
+  });
+
   const [inputValue, setInputValue] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState(0);
   const chatRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight; }, [messages, isTyping]);
+  // Fetch real streak from contract
+  useEffect(() => {
+    if (!account || !walletConnected) return;
+    getUserHabits(account).then(async (ids) => {
+      if (ids.length === 0) return;
+      const habits = await Promise.all(ids.map(id => getHabit(id)));
+      const maxStreak = habits.reduce((m, h) => Math.max(m, h.currentStreak), 0);
+      setCurrentStreak(maxStreak);
+    }).catch(() => {});
+  }, [account, walletConnected, getUserHabits, getHabit]);
+
+  // Map OpenClaw messages to display format
+  const displayMessages: DisplayMessage[] = [
+    { id: 0, text: WELCOME_MSG, sender: 'ai' },
+    ...openClawMessages.map((m: OpenClawMessage, i: number) => ({
+      id: i + 1,
+      text: m.content,
+      sender: (m.role === 'user' ? 'user' : 'ai') as 'user' | 'ai',
+    })),
+  ];
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [displayMessages.length, isStreaming]);
 
   const sendMessage = (text?: string) => {
     const msg = text || inputValue.trim();
-    if (!msg) return;
-    const userMsg: Message = { id: messages.length, text: msg, sender: 'user' };
-    setMessages((prev) => [...prev, userMsg]);
+    if (!msg || isStreaming) return;
     setInputValue('');
-    setIsTyping(true);
-    setTimeout(() => {
-      const resp = AI_RESPONSES[Math.floor(Math.random() * AI_RESPONSES.length)];
-      const aiMsg: Message = { id: messages.length + 1, text: resp ?? '', sender: 'ai' };
-      setMessages((prev) => [...prev, aiMsg]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 1200);
+    openClawSend(msg);
   };
 
   return (
@@ -58,7 +78,7 @@ export default function Coach() {
 
       {/* AI Status */}
       <div style={{ position: 'absolute', left: 840, top: 140, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-        <MetricCard theme="purple" title="Coach Status" value="✨ Active" delay={0.3} />
+        <MetricCard theme="purple" title="Coach Status" value={daemonOnline ? "✨ Active" : "⚡ Offline"} delay={0.3} />
       </div>
 
       {/* Main chat card with blob + glow */}
@@ -78,13 +98,15 @@ export default function Coach() {
                 <span style={{ fontSize: 40 }}>🤖</span>
                 <div>
                   <h2 style={{ ...typography.heading3, margin: 0 }}>OpenClaw Coach</h2>
-                  <span style={{ fontFamily: FONT_HEADING, fontSize: 14, color: '#90B171', fontWeight: 600 }}>● Online</span>
+                  <span style={{ fontFamily: FONT_HEADING, fontSize: 14, color: daemonOnline ? '#90B171' : '#FF6B6B', fontWeight: 600 }}>
+                    {daemonOnline ? '● Online' : '● Offline'}
+                  </span>
                 </div>
               </div>
 
               {/* Messages area */}
               <div ref={chatRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 8 }}>
-                {messages.map((msg) => (
+                {displayMessages.map((msg) => (
                   <div key={msg.id} style={{ display: 'flex', justifyContent: msg.sender === 'ai' ? 'flex-start' : 'flex-end' }}>
                     <div style={{
                       maxWidth: '70%', padding: '14px 20px',
@@ -97,7 +119,7 @@ export default function Coach() {
                     </div>
                   </div>
                 ))}
-                {isTyping && (
+                {isStreaming && displayMessages[displayMessages.length - 1]?.sender !== 'ai' && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                     <div style={{ padding: '14px 24px', borderRadius: '24px 24px 24px 6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: 6, alignItems: 'center' }}>
                       {[0, 1, 2].map((i) => (
@@ -107,6 +129,13 @@ export default function Coach() {
                   </div>
                 )}
               </div>
+
+              {/* Error banner */}
+              {error && (
+                <div style={{ padding: '8px 16px', borderRadius: 12, background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.2)', fontFamily: FONT_HEADING, fontSize: 12, color: '#FF6B6B', marginTop: 8 }}>
+                  {error}
+                </div>
+              )}
 
               {/* Input area */}
               <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
@@ -119,8 +148,9 @@ export default function Coach() {
                 />
                 <button
                   onClick={() => sendMessage()}
-                  style={{ width: 52, height: 52, borderRadius: '50%', border: 'none', background: `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}, #A78BFA)`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s ease', boxShadow: '0 4px 16px rgba(139,92,246,0.3)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; }}
+                  disabled={isStreaming}
+                  style={{ width: 52, height: 52, borderRadius: '50%', border: 'none', background: `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}, #A78BFA)`, cursor: isStreaming ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s ease', boxShadow: '0 4px 16px rgba(139,92,246,0.3)', opacity: isStreaming ? 0.6 : 1 }}
+                  onMouseEnter={(e) => { if (!isStreaming) e.currentTarget.style.transform = 'scale(1.1)'; }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -139,9 +169,10 @@ export default function Coach() {
         <div key={action} style={{ position: 'absolute', left: 860, top: 380 + i * 72, animation: slideIn(0.5 + i * 0.08) }}>
           <button
             onClick={() => sendMessage(action)}
+            disabled={isStreaming}
             style={{
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: '16px 28px',
-              fontFamily: FONT_HEADING, fontWeight: 600, fontSize: 14, cursor: 'pointer',
+              fontFamily: FONT_HEADING, fontWeight: 600, fontSize: 14, cursor: isStreaming ? 'wait' : 'pointer',
               background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)',
               transition: 'all 0.25s ease', width: 380, textAlign: 'left',
             }}
@@ -153,9 +184,9 @@ export default function Coach() {
         </div>
       ))}
 
-      {/* Streak info card */}
+      {/* Streak info card — real data */}
       <div style={{ position: 'absolute', left: 860, top: 690, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-        <MetricCard theme="orange" title="Your Streak" value="🔥 7 days" delay={0.6} />
+        <MetricCard theme="orange" title="Your Streak" value={`🔥 ${currentStreak} days`} delay={0.6} />
       </div>
     </div>
   );

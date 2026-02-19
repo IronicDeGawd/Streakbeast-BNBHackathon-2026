@@ -1,5 +1,5 @@
 /**
- * Settings — User preferences page with real wallet data.
+ * Settings — User preferences page with real wallet data, linked accounts, and OpenClaw status.
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback } from 'react';
@@ -9,11 +9,13 @@ import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
 import { CARD_SHADOW, FONT_HEADING, COLOR_PURPLE_ACCENT } from '../utils/tokens';
 import { useWallet } from '../contexts/WalletContext';
+import { useLinkedAccounts } from '../hooks/useLinkedAccounts';
+import { useOpenClawStatus } from '../contexts/OpenClawContext';
 
-const LINKED_ACCOUNTS = [
-  { name: 'Strava', icon: '🏃', status: 'Not connected' },
-  { name: 'GitHub', icon: '💙', status: 'Not connected' },
-  { name: 'Duolingo', icon: '🦉', status: 'Not connected' },
+const ACCOUNT_META: { key: 'strava' | 'github' | 'duolingo'; name: string; icon: string }[] = [
+  { key: 'strava', name: 'Strava', icon: '🏃' },
+  { key: 'github', name: 'GitHub', icon: '💙' },
+  { key: 'duolingo', name: 'Duolingo', icon: '🦉' },
 ];
 
 /* ── Network name from chainId ── */
@@ -42,6 +44,8 @@ function loadPref(key: string, defaultVal: boolean): boolean {
 
 export default function Settings() {
   const { account, isConnected, balance, chainId, disconnect } = useWallet();
+  const { accounts, connect, disconnect: disconnectAccount } = useLinkedAccounts();
+  const { isConnected: openClawActive } = useOpenClawStatus();
 
   const [notifications, setNotifications] = useState(() => loadPref(PREF_KEYS.notifications, true));
   const [soundEffects, setSoundEffects] = useState(() => loadPref(PREF_KEYS.soundEffects, false));
@@ -144,32 +148,38 @@ export default function Settings() {
             <div style={{ position: 'relative', padding: '48px 50px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <h2 style={{ ...typography.heading2, marginBottom: 8 }}>Linked Accounts</h2>
 
-              {LINKED_ACCOUNTS.map((acc, i) => (
-                <div key={acc.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: i < LINKED_ACCOUNTS.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', animation: slideIn(0.4 + i * 0.08) }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <span style={{ fontSize: 28 }}>{acc.icon}</span>
-                    <div>
-                      <div style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 16, color: '#fff' }}>{acc.name}</div>
-                      <div style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: 'rgba(255,255,255,0.3)' }}>{acc.status}</div>
+              {ACCOUNT_META.map((acc, i) => {
+                const data = accounts[acc.key];
+                return (
+                  <div key={acc.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: i < ACCOUNT_META.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', animation: slideIn(0.4 + i * 0.08) }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <span style={{ fontSize: 28 }}>{acc.icon}</span>
+                      <div>
+                        <div style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 16, color: '#fff' }}>{acc.name}</div>
+                        <div style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: data.connected ? '#90B171' : 'rgba(255,255,255,0.3)' }}>
+                          {data.connected ? (data.username || 'Connected') : 'Not connected'}
+                        </div>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => data.connected ? disconnectAccount(acc.key) : connect(acc.key)}
+                      style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '8px 20px', fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: data.connected ? '#FF6B6B' : 'rgba(255,255,255,0.6)', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = data.connected ? 'rgba(255,100,100,0.1)' : `${COLOR_PURPLE_ACCENT}22`; e.currentTarget.style.borderColor = data.connected ? 'rgba(255,100,100,0.3)' : `${COLOR_PURPLE_ACCENT}44`; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = data.connected ? '#FF6B6B' : 'rgba(255,255,255,0.6)'; }}
+                    >
+                      {data.connected ? 'Disconnect' : 'Connect'}
+                    </button>
                   </div>
-                  <button
-                    style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '8px 20px', fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', transition: 'all 0.2s ease' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = `${COLOR_PURPLE_ACCENT}22`; e.currentTarget.style.borderColor = `${COLOR_PURPLE_ACCENT}44`; e.currentTarget.style.color = '#fff'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)'; }}
-                  >
-                    Connect
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
       </div>
 
-      {/* OpenClaw Agent */}
+      {/* OpenClaw Agent — live status */}
       <div style={{ position: 'absolute', left: 40, top: 510, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-        <MetricCard theme="purple" title="OpenClaw Agent" value="● Active" delay={0.5} />
+        <MetricCard theme="purple" title="OpenClaw Agent" value={openClawActive ? "● Active" : "● Offline"} delay={0.5} />
       </div>
 
       {/* Preferences card */}

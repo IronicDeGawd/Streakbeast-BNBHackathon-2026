@@ -8,6 +8,16 @@ const api = {
     node: process.versions.node,
     chrome: process.versions.chrome,
     electron: process.versions.electron
+  },
+  oauth: {
+    openUrl: (url: string) => ipcRenderer.invoke('oauth:open-url', url),
+    onCallback: (callback: (url: string) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, url: string) => callback(url)
+      ipcRenderer.on('oauth:callback', handler)
+      return () => { ipcRenderer.removeListener('oauth:callback', handler) }
+    },
+    storeToken: (provider: string, token: string) => ipcRenderer.invoke('oauth:store-token', provider, token),
+    getToken: (provider: string) => ipcRenderer.invoke('oauth:get-token', provider),
   }
 }
 

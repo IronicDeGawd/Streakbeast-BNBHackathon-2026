@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { WalletProvider } from './contexts/WalletContext';
+import { OpenClawProvider } from './contexts/OpenClawContext';
 import Layout from './components/Layout';
 import Sidebar from './components/Sidebar';
 import { WalletStatusCard } from './components/cards';
@@ -68,9 +69,11 @@ function AppContent(): React.ReactElement {
 function App(): React.ReactElement {
   return (
     <WalletProvider>
-      <HashRouter>
-        <AppContent />
-      </HashRouter>
+      <OpenClawProvider>
+        <HashRouter>
+          <AppContent />
+        </HashRouter>
+      </OpenClawProvider>
     </WalletProvider>
   );
 }

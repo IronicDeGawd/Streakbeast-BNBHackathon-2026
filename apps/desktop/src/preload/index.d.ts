@@ -10,6 +10,12 @@ declare global {
         chrome: string
         electron: string
       }
+      oauth: {
+        openUrl: (url: string) => Promise<void>
+        onCallback: (callback: (url: string) => void) => void
+        storeToken: (provider: string, token: string) => Promise<void>
+        getToken: (provider: string) => Promise<string | null>
+      }
     }
   }
 }
