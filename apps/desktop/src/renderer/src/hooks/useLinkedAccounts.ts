@@ -36,13 +36,18 @@ export function useLinkedAccounts() {
       const result = parseCallback(url)
       if (!result) return
 
-      const { provider, code } = result
+      const { provider, username, refreshToken } = result
       const key = provider as OAuthProvider
-      if (!code || !['github', 'strava', 'duolingo'].includes(key)) return
+      if (!['github', 'strava', 'duolingo'].includes(key)) return
 
       setAccounts(prev => ({
         ...prev,
-        [key]: { ...prev[key], connected: true, token: code },
+        [key]: {
+          ...prev[key],
+          connected: true,
+          username,
+          ...(refreshToken && { refreshToken }),
+        },
       }))
     })
 
@@ -60,12 +65,5 @@ export function useLinkedAccounts() {
     }))
   }, [])
 
-  const setDuolingoUsername = useCallback((username: string) => {
-    setAccounts(prev => ({
-      ...prev,
-      duolingo: { provider: 'duolingo', connected: !!username, username },
-    }))
-  }, [])
-
-  return { accounts, connect, disconnect, setDuolingoUsername }
+  return { accounts, connect, disconnect }
 }

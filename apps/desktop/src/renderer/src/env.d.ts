@@ -5,8 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_OPENCLAW_URL: string;
   readonly VITE_OPENCLAW_TOKEN: string;
   readonly VITE_BADGE_SERVICE_URL: string;
-  readonly VITE_GITHUB_CLIENT_ID: string;
-  readonly VITE_STRAVA_CLIENT_ID: string;
+  readonly VITE_AUTH_URL: string;
 }
 
 interface ImportMeta {
