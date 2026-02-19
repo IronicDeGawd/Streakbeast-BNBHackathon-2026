@@ -33,14 +33,12 @@ export function useOpenClaw(options: UseOpenClawOptions = {}): UseOpenClawReturn
 
   const checkConnection = useCallback(async (): Promise<boolean> => {
     try {
-      const headers: Record<string, string> = {}
-      if (OPENCLAW_TOKEN) headers['Authorization'] = `Bearer ${OPENCLAW_TOKEN}`
-      const resp = await fetch(`${OPENCLAW_URL}/v1/models`, {
-        method: 'GET',
-        headers,
-        signal: AbortSignal.timeout(3000),
+      const resp = await window.api?.openclawFetch(`${OPENCLAW_URL}/tools/invoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: 'sessions_list', action: 'json', args: {} }),
       })
-      const ok = resp.ok
+      const ok = resp?.ok ?? false
       setIsConnected(ok)
       return ok
     } catch {
@@ -50,104 +48,40 @@ export function useOpenClaw(options: UseOpenClawOptions = {}): UseOpenClawReturn
   }, [])
 
   const sendMessage = useCallback(async (content: string) => {
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-
     const userMsg: OpenClawMessage = { role: 'user', content }
+    setMessages(prev => [...prev, userMsg])
 
-    setMessages(prev => {
-      const allMessages = [...prev, userMsg]
+    setIsStreaming(true)
+    setError(null)
 
-      // Build request messages
-      const requestMessages = options.systemPrompt
-        ? [{ role: 'system' as const, content: options.systemPrompt }, ...allMessages]
-        : allMessages
+    // Send only system + current user message (agent keeps its own session history)
+    const requestMessages: OpenClawMessage[] = []
+    if (options.systemPrompt) requestMessages.push({ role: 'system', content: options.systemPrompt })
+    requestMessages.push(userMsg)
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (OPENCLAW_TOKEN) headers['Authorization'] = `Bearer ${OPENCLAW_TOKEN}`
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (OPENCLAW_TOKEN) headers['Authorization'] = `Bearer ${OPENCLAW_TOKEN}`
 
-      setIsStreaming(true)
-      setError(null)
-
-      fetch(`${OPENCLAW_URL}/v1/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: options.model || 'agent:streakbeast',
-          messages: requestMessages,
-          stream: true,
-          ...(options.userId ? { user: options.userId } : {}),
-        }),
-        signal: controller.signal,
-      })
-        .then(async (resp) => {
-          if (!resp.ok) throw new Error(`OpenClaw error: ${resp.status}`)
-
-          const reader = resp.body?.getReader()
-          const decoder = new TextDecoder()
-          let assistantContent = ''
-
-          if (reader) {
-            let buffer = ''
-            while (true) {
-              const { done, value } = await reader.read()
-              if (done) break
-
-              buffer += decoder.decode(value, { stream: true })
-              const lines = buffer.split('\n')
-              buffer = lines.pop() || ''
-
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue
-                const data = line.slice(6).trim()
-                if (data === '[DONE]') break
-
-                try {
-                  const parsed = JSON.parse(data)
-                  const delta = parsed.choices?.[0]?.delta?.content || ''
-                  assistantContent += delta
-
-                  setMessages(curr => {
-                    const updated = [...curr]
-                    const last = updated[updated.length - 1]
-                    if (last?.role === 'assistant') {
-                      return [...updated.slice(0, -1), { ...last, content: assistantContent }]
-                    }
-                    return [...updated, { role: 'assistant', content: assistantContent }]
-                  })
-                } catch {
-                  // skip malformed chunks
-                }
-              }
-            }
-          }
-
-          // If no streaming content came through, try non-streaming response
-          if (!assistantContent) {
-            try {
-              const text = await resp.text()
-              const json = JSON.parse(text)
-              const content = json.choices?.[0]?.message?.content || ''
-              if (content) {
-                setMessages(curr => [...curr, { role: 'assistant', content }])
-              }
-            } catch {
-              // already consumed
-            }
-          }
-        })
-        .catch((err) => {
-          if ((err as Error).name !== 'AbortError') {
-            setError((err as Error).message)
-          }
-        })
-        .finally(() => {
-          setIsStreaming(false)
-        })
-
-      return allMessages
+    const body = JSON.stringify({
+      model: options.model || 'agent:streakbeast',
+      messages: requestMessages,
+      stream: false,
+      ...(options.userId ? { user: options.userId } : {}),
     })
+
+    try {
+      const resp = await window.api?.openclawFetch(`${OPENCLAW_URL}/v1/chat/completions`, { method: 'POST', headers, body })
+      if (!resp || !resp.ok) throw new Error(`OpenClaw error: ${resp?.status || 'no response'}`)
+      const json = JSON.parse(resp.text)
+      const assistantContent = json.choices?.[0]?.message?.content || ''
+      if (assistantContent) {
+        setMessages(curr => [...curr, { role: 'assistant', content: assistantContent }])
+      }
+    } catch (err) {
+      setError((err as Error).message)
+    } finally {
+      setIsStreaming(false)
+    }
   }, [options.model, options.systemPrompt, options.userId])
 
   const clearMessages = useCallback(() => {

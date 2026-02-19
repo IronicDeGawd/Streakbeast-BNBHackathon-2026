@@ -1,6 +1,6 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, Notification, net } from 'electron'
 import { join, resolve } from 'path'
-import { existsSync, mkdirSync, cpSync } from 'fs'
+import { existsSync, mkdirSync, cpSync, readFileSync, writeFileSync } from 'fs'
 import { homedir } from 'os'
 
 const isDev = !app.isPackaged
@@ -10,8 +10,8 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 960,
-    height: 640,
+    width: 1470,
+    height: 923,
     useContentSize: true,
     minWidth: 960,
     minHeight: 640,
@@ -26,8 +26,8 @@ function createWindow(): void {
     }
   })
 
-  // Lock aspect ratio to 960:640 (3:2) so the window scales proportionally
-  mainWindow.setAspectRatio(960 / 640)
+  // Lock aspect ratio to 1470:923 so the window scales proportionally
+  mainWindow.setAspectRatio(1470 / 923)
 
   mainWindow.on('ready-to-show', () => {
     mainWindow?.show()
@@ -87,6 +87,45 @@ app.on('open-url', (event, url) => {
   }
 })
 
+/** Read gateway auth token from ~/.openclaw/openclaw.json */
+let gatewayToken = ''
+
+function readGatewayConfig(): any {
+  const configPath = join(homedir(), '.openclaw', 'openclaw.json')
+  if (!existsSync(configPath)) return null
+  try {
+    return JSON.parse(readFileSync(configPath, 'utf-8'))
+  } catch {
+    return null
+  }
+}
+
+/** Ensure the chatCompletions endpoint is enabled in gateway config */
+function ensureGatewayConfig(): void {
+  const configPath = join(homedir(), '.openclaw', 'openclaw.json')
+  const config = readGatewayConfig()
+  if (!config) return
+
+  // Read auth token for API calls
+  gatewayToken = config.gateway?.auth?.token || ''
+
+  // Enable chatCompletions if not already
+  if (!config.gateway) config.gateway = {}
+  if (!config.gateway.http) config.gateway.http = {}
+  if (!config.gateway.http.endpoints) config.gateway.http.endpoints = {}
+  if (!config.gateway.http.endpoints.chatCompletions) {
+    config.gateway.http.endpoints.chatCompletions = { enabled: true }
+    try {
+      writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8')
+      console.log('[Gateway] Enabled chatCompletions endpoint')
+    } catch (e) {
+      console.error('[Gateway] Failed to update config:', e)
+    }
+  } else {
+    console.log('[Gateway] chatCompletions already enabled')
+  }
+}
+
 /** Copy bundled skill to ~/.openclaw/skills/streakbeast if not already present */
 function installSkill(): void {
   const dest = join(homedir(), '.openclaw', 'skills', 'streakbeast')
@@ -112,6 +151,7 @@ function installSkill(): void {
 
 app.whenReady().then(() => {
   app.setAppUserModelId?.('com.streakbeast')
+  ensureGatewayConfig()
   installSkill()
 
   createWindow()
@@ -129,6 +169,33 @@ app.whenReady().then(() => {
 
   ipcMain.handle('oauth:get-token', async (_event, provider: string) => {
     return oauthTokens[provider] || null
+  })
+
+  // Proxy fetch for local OpenClaw daemon (bypasses CORS — net.fetch runs in main process)
+  // Auto-injects the gateway auth token from ~/.openclaw/openclaw.json
+  ipcMain.handle('openclaw:fetch', async (_event, url: string, init: { method?: string; headers?: Record<string, string>; body?: string }) => {
+    try {
+      const headers = { ...init.headers }
+      if (gatewayToken && !headers['Authorization']) {
+        headers['Authorization'] = `Bearer ${gatewayToken}`
+      }
+      const resp = await net.fetch(url, {
+        method: init.method || 'GET',
+        headers,
+        body: init.body || undefined,
+      })
+      const text = await resp.text()
+      return { ok: resp.ok, status: resp.status, text }
+    } catch (err: any) {
+      return { ok: false, status: 0, text: err.message || 'Network error' }
+    }
+  })
+
+  // Native notification handler
+  ipcMain.handle('notify:show', async (_event, title: string, body: string) => {
+    if (!Notification.isSupported()) return false
+    new Notification({ title, body }).show()
+    return true
   })
 
   app.on('activate', function () {
