@@ -4,6 +4,20 @@ Gamified onchain habit tracker with AI-powered verification, NFT achievement bad
 
 Users stake BNB on habits (coding, exercise, reading, meditation, language learning), and an autonomous AI agent verifies completions via GitHub, Strava, and Duolingo APIs. Maintained streaks earn proportional rewards from the staking pool, while milestone achievements mint soulbound NFT badges.
 
+## Screenshots
+
+| |
+|---|
+| <img width="1206" height="757" alt="Screenshot 2026-02-20 at 4 47 57 AM" src="https://github.com/user-attachments/assets/ec43014e-5061-47e1-ad1e-9c7a4d0ec92b" /> |
+
+| | |
+|---|---|
+| <img width="1203" height="757" alt="Screenshot 2026-02-20 at 4 48 55 AM" src="https://github.com/user-attachments/assets/64c13b48-6ea9-4a6e-92d3-f0ca95aa17ff" /> | <img width="1205" height="757" alt="Screenshot 2026-02-20 at 4 48 48 AM" src="https://github.com/user-attachments/assets/0edb8590-cf1b-430d-9a1a-747fe9cfbc19" /> |
+
+| | |
+|---|---|
+| <img width="1210" height="754" alt="Screenshot 2026-02-20 at 4 48 07 AM" src="https://github.com/user-attachments/assets/db1504a4-4749-4658-808b-ec6ae3a96c3e" /> | <img width="1204" height="755" alt="Screenshot 2026-02-20 at 4 48 19 AM" src="https://github.com/user-attachments/assets/a838c3c5-8c95-4cec-ac6e-75a5ceafdf64" /> |
+
 ## Architecture
 
 ```
