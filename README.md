@@ -82,15 +82,76 @@ npx hardhat run scripts/deploy.ts --network opbnbTestnet
 4. **Earn** - At pool end, rewards distribute proportionally to streak lengths (+10% bonus per perfect week)
 5. **Collect** - Milestone streaks (1, 7, 30, 100, 365 days) auto-mint soulbound NFT badges
 
-## AI Agent
+## OpenClaw Integration
 
-The Python-based agent (`skill/`) runs autonomously to:
+StreakBeast is built on [OpenClaw](https://github.com/OpenClaw), an open framework for building autonomous AI agents that act and transact onchain. The desktop app communicates with the OpenClaw daemon over a local OpenAI-compatible API.
 
-- **Verify habits** via GitHub API, Strava API, and Duolingo API
-- **Submit check-ins** onchain with cryptographic proof
-- **Mint badges** when users hit streak milestones
-- **Distribute rewards** from staking pools at the end of each period
-- **Coach users** with personalized habit guidance
+### How It Connects
+
+> **Desktop App** &rarr; `HTTP` &rarr; **OpenClaw Daemon** (`localhost:18789`) &rarr; `agent:streakbeast` &rarr; **skill/scripts/** &rarr; **opBNB**
+
+| Step | Component | What Happens |
+|---|---|---|
+| 1 | Desktop App | Sends chat message to OpenClaw via `POST /v1/chat/completions` |
+| 2 | OpenClaw Daemon | Routes request to the `agent:streakbeast` model |
+| 3 | Agent (skill/) | Reads `SKILL.md` instructions, executes Python scripts |
+| 4 | Python Scripts | Calls GitHub/Strava/Duolingo APIs, submits transactions to opBNB |
+| 5 | Desktop App | Receives streamed response, updates UI in real-time |
+
+The daemon also exposes `GET /v1/models` as a health check, polled every 30 seconds by the app to show connection status.
+
+### Running OpenClaw Locally
+
+1. **Install OpenClaw** following the [official docs](https://github.com/OpenClaw)
+
+2. **Register the StreakBeast skill:**
+   ```bash
+   openclaw skill register ./skill
+   ```
+
+3. **Set the agent environment variables:**
+   ```bash
+   # In your OpenClaw daemon config
+   OPBNB_RPC_URL=https://opbnb-testnet-rpc.bnbchain.org
+   WALLET_PRIVATE_KEY=<agent-wallet-private-key>
+   GITHUB_TOKEN=<github-personal-access-token>
+   STRAVA_CLIENT_ID=<strava-client-id>
+   STRAVA_CLIENT_SECRET=<strava-client-secret>
+   ```
+
+4. **Start the daemon:**
+   ```bash
+   openclaw daemon start
+   ```
+   The daemon runs on `http://localhost:18789` by default.
+
+5. **Configure the desktop app** (optional — defaults to localhost):
+   ```bash
+   # In apps/desktop/.env
+   VITE_OPENCLAW_URL=http://localhost:18789
+   VITE_OPENCLAW_TOKEN=<optional-bearer-token>
+   ```
+
+### Agent Capabilities
+
+The StreakBeast agent (`skill/`) runs autonomously via OpenClaw to:
+
+| Script | Purpose |
+|---|---|
+| `verify_habit.py` | Checks GitHub commits, Strava activities, or Duolingo XP for daily completion |
+| `submit_checkin.py` | Submits verified check-ins onchain with cryptographic proof |
+| `mint_badge.py` | Auto-mints soulbound NFT badges at streak milestones (1, 7, 30, 100, 365 days) |
+| `distribute_rewards.py` | Calculates and distributes proportional rewards from staking pools |
+| `coaching.py` | Generates personalized habit coaching based on user streak patterns |
+
+### Verification Methods
+
+| Habit Type | API | Proof |
+|---|---|---|
+| Coding | GitHub Events API | Commit SHA or event ID |
+| Exercise | Strava Activities API | Activity ID |
+| Reading/Language | Duolingo profile API | XP snapshot hash |
+| Meditation/Custom | Self-reported | Timestamp proof |
 
 ## Tech Stack
 
@@ -102,7 +163,7 @@ The Python-based agent (`skill/`) runs autonomously to:
 | Blockchain | opBNB Testnet (Chain ID 5611) |
 | Auth | Next.js 15 on Vercel |
 | Badge API | Express on Vercel Serverless |
-| AI Agent | Python, web3.py |
+| AI Agent | OpenClaw, Python, web3.py |
 
 ## License
 
