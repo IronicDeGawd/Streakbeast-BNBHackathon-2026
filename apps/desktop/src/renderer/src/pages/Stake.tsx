@@ -2,7 +2,9 @@
  * Stake — Habit commitment page with real blockchain staking.
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { HiCodeBracket, HiBookOpen, HiStar, HiLanguage, HiFire, HiLink, HiArrowPath } from 'react-icons/hi2';
+import { LuDumbbell, LuBrain } from 'react-icons/lu';
 import { MetricCard, ActivityCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
@@ -10,14 +12,15 @@ import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../s
 import { CARD_SHADOW, FONT_HEADING, FONT_BODY, COLOR_PURPLE_ACCENT, STATUS_DONE, STATUS_ACTIVE } from '../utils/tokens';
 import { useStreakBeastCore } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
+import { useNotifications } from '../hooks/useNotifications';
 
-const HABIT_TYPES = [
-  { id: 0, name: 'Coding', icon: '</>', theme: 'purple' as const },
-  { id: 1, name: 'Exercise', icon: '🏃', theme: 'red' as const },
-  { id: 2, name: 'Reading', icon: '📚', theme: 'coral' as const },
-  { id: 3, name: 'Meditation', icon: '🧘', theme: 'purple' as const },
-  { id: 4, name: 'Language', icon: '🗣', theme: 'red' as const },
-  { id: 5, name: 'Custom', icon: '⭐', theme: 'coral' as const },
+const HABIT_TYPES: { id: number; name: string; icon: React.ReactNode; theme: 'purple' | 'red' | 'coral' }[] = [
+  { id: 0, name: 'Coding', icon: <HiCodeBracket size={24} />, theme: 'purple' },
+  { id: 1, name: 'Exercise', icon: <LuDumbbell size={24} />, theme: 'red' },
+  { id: 2, name: 'Reading', icon: <HiBookOpen size={24} />, theme: 'coral' },
+  { id: 3, name: 'Meditation', icon: <LuBrain size={24} />, theme: 'purple' },
+  { id: 4, name: 'Language', icon: <HiLanguage size={24} />, theme: 'red' },
+  { id: 5, name: 'Custom', icon: <HiStar size={24} />, theme: 'coral' },
 ];
 
 const DURATION_OPTIONS = [7, 14, 30, 60, 90];
@@ -25,6 +28,7 @@ const DURATION_OPTIONS = [7, 14, 30, 60, 90];
 export default function Stake() {
   const { isConnected, balance } = useWallet();
   const { stake, isReady } = useStreakBeastCore();
+  const { notify } = useNotifications();
 
   const [selectedHabit, setSelectedHabit] = useState<number | null>(null);
   const [stakeAmount, setStakeAmount] = useState('0.05');
@@ -49,6 +53,7 @@ export default function Stake() {
       const receipt = await stake(selectedHabit, selectedDuration, stakeAmount);
       setTxStatus('success');
       setTxMessage(`Staked successfully! Tx: ${receipt?.hash ? `${(receipt.hash as string).slice(0, 10)}…` : 'confirmed'}`);
+      notify('Stake Confirmed', `You staked ${stakeAmount} BNB on ${selectedHabitName} for ${selectedDuration} days. Stay consistent!`);
     } catch (e: any) {
       setTxStatus('error');
       const raw = e?.reason || e?.message || 'Transaction failed';
@@ -85,7 +90,7 @@ export default function Stake() {
               <div style={abs({ inset: 0, ...cardBackground })} />
               <div style={abs({ inset: 0, ...cardBackdrop })} />
               <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, textAlign: 'center', padding: '0 60px' }}>
-                <span style={{ fontSize: 56 }}>🔗</span>
+                <span style={{ fontSize: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiLink size={56} color="rgba(255,255,255,0.7)" /></span>
                 <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
                 <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 400 }}>
                   Connect your BNB wallet to stake on your habits. Your commitment is secured onchain — put skin in the game and earn rewards for consistency.
@@ -223,7 +228,7 @@ export default function Stake() {
           onMouseEnter={(e) => { if (canStake) { e.currentTarget.style.transform = 'scale(1.06)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(139,92,246,0.5)'; } }}
           onMouseLeave={(e) => { if (canStake) { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(139,92,246,0.35)'; } }}
         >
-          {isStaking ? '⏳ Staking...' : '🔥 Stake & Commit'}
+          {isStaking ? <><HiArrowPath size={20} style={{ display: 'inline', verticalAlign: 'middle', animation: 'spin 1s linear infinite' }} /> Staking...</> : <><HiFire size={20} style={{ display: 'inline', verticalAlign: 'middle' }} /> Stake &amp; Commit</>}
         </button>
 
         {/* Transaction status message */}

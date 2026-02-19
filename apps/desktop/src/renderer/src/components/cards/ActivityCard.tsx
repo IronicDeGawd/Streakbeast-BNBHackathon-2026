@@ -2,13 +2,16 @@
  * ActivityCard — Unified activity/mission card with theme prop.
  * Replaces ActivityCard1 (purple), ActivityCard2 (red), ActivityCard3 (coral).
  */
+import React, { useRef } from "react";
+import { HiFire } from "react-icons/hi2";
 import { ACTIVITY_THEMES, slideUp, type ActivityTheme } from "../../styles/theme";
 import { FONT_HEADING } from "../../utils/tokens";
+import { useBlobBreathing, useParallaxHover } from "../../hooks/useAnimations";
 
 interface ActivityCardProps {
   theme: ActivityTheme;
   delay?: number;
-  icon?: string;
+  icon?: React.ReactNode;
   title?: string;
   streak?: number;
   status?: string;
@@ -28,8 +31,16 @@ export default function ActivityCard({
   const blobFilterId = `f_blob_act_${theme}`;
   const bodyFilterId = `f_body_act_${theme}`;
 
+  const blobRef = useRef<SVGPathElement>(null);
+  const bgBlobRef = useRef<SVGPathElement>(null);
+  const parallaxRef = useParallaxHover(10);
+
+  useBlobBreathing(blobRef, t.blobPath, { intensity: 4, duration: 5000 });
+  useBlobBreathing(bgBlobRef, t.bgBlobPath ?? "", { intensity: 3, duration: 6000 });
+
   return (
     <div
+      ref={parallaxRef}
       style={{
         position: "relative",
         animation: slideUp(delay),
@@ -47,27 +58,30 @@ export default function ActivityCard({
         viewBox={t.viewBox}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ width: parseInt(t.viewBox.split(" ")[2]), height: parseInt(t.viewBox.split(" ")[3]), display: "block" }}
+        style={{ width: parseInt(t.viewBox.split(" ")[2] || "0"), height: parseInt(t.viewBox.split(" ")[3] || "0"), display: "block" }}
       >
         {/* Optional background blob (red theme) */}
         {t.bgBlobPath && (
           <path
+            ref={bgBlobRef}
             d={t.bgBlobPath}
             fill={t.bgBlobGradient ? `url(#${t.bgBlobGradient.id})` : t.blobColor}
             fillOpacity="0.8"
+            data-depth="blob"
           />
         )}
 
         {/* Main blob behind card */}
-        <g filter={`url(#${blobFilterId})`}>
+        <g filter={`url(#${blobFilterId})`} data-depth="blob">
           <path
+            ref={blobRef}
             d={t.blobPath}
             fill={t.blobGradient ? `url(#${t.blobGradient.id})` : t.blobColor}
           />
         </g>
 
         {/* Card body — either rect or path depending on theme */}
-        <g filter={`url(#${bodyFilterId})`}>
+        <g filter={`url(#${bodyFilterId})`} data-depth="body">
           {t.bodyIsRect ? (
             <rect
               x={t.bodyIsRect.x}
@@ -83,10 +97,14 @@ export default function ActivityCard({
         </g>
 
         {/* Status badge */}
-        <rect x={t.badgeX} y={t.badgeY} width={t.badgeWidth} height="28" rx="13" fill={statusColor} />
+        <rect x={t.badgeX} y={t.badgeY} width={t.badgeWidth} height="28" rx="13" fill={statusColor} data-depth="body" />
 
         {/* Icon */}
-        <text x={t.iconX} y={t.iconY} fontSize="24" fill="white">{icon}</text>
+        <foreignObject x={t.iconX} y={t.iconY - 22} width="32" height="32">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, color: '#fff' }}>
+            {icon}
+          </div>
+        </foreignObject>
 
         {/* Title */}
         <text x={t.titleX} y={t.titleY} fontFamily={FONT_HEADING} fontWeight="800" fontSize="28" fill="white">
@@ -94,9 +112,11 @@ export default function ActivityCard({
         </text>
 
         {/* Streak */}
-        <text x={t.streakX} y={t.streakY} fontFamily={FONT_HEADING} fontWeight="700" fontSize="22" fill="white">
-          🔥 {streak}
-        </text>
+        <foreignObject x={t.streakX} y={t.streakY - 18} width="120" height="28">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#fff', fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 22 }}>
+            <HiFire size={20} color="#FF6B35" /> {streak}
+          </div>
+        </foreignObject>
 
         {/* Badge label */}
         <text x={t.badgeLabelX} y={t.badgeLabelY} fontFamily={FONT_HEADING} fontWeight="700" fontSize="14" fill="white" textAnchor="middle">

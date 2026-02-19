@@ -3,6 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { HiLink, HiLockClosed } from 'react-icons/hi2';
 import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
@@ -100,7 +101,7 @@ export default function Achievements() {
               <div style={abs({ inset: 0, ...cardBackground })} />
               <div style={abs({ inset: 0, ...cardBackdrop })} />
               <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, textAlign: 'center', padding: '0 60px' }}>
-                <span style={{ fontSize: 56 }}>🔗</span>
+                <span style={{ fontSize: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiLink size={56} color="rgba(255,255,255,0.7)" /></span>
                 <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
                 <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
                   Connect your BNB wallet to view your NFT badge collection. Badges are minted onchain as you hit streak milestones — from your first day to a full year.
@@ -200,7 +201,7 @@ export default function Achievements() {
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontFamily: FONT_HEADING, fontSize: 14, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>{badge.progress}%</span>
-                            <span style={{ fontSize: 14, opacity: 0.3 }}>🔒</span>
+                            <span style={{ fontSize: 14, opacity: 0.3, display: 'flex', alignItems: 'center' }}><HiLockClosed size={14} color="rgba(255,255,255,0.5)" /></span>
                           </div>
                         </div>
                       )}

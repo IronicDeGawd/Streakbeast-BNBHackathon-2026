@@ -5,22 +5,26 @@
  * PageShell, Sidebar, and viewport scaling).
  */
 import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { HiCodeBracket, HiBookOpen, HiStar, HiLanguage } from 'react-icons/hi2';
+import { LuDumbbell, LuBrain } from 'react-icons/lu';
 import PetCanvas from '../components/PetCanvas';
 import { MainCard, MetricCard, ActivityCard } from '../components/cards';
 import { slideUp, typography } from '../styles/theme';
 import { STATUS_DONE, STATUS_ACTIVE, EASE_SPRING, FONT_HEADING } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
+import { useNotifications } from '../hooks/useNotifications';
+import { useCountdown } from '../hooks/useCountdown';
 import type { ActivityTheme } from '../styles/theme';
 
 /* ── Habit type → display meta ── */
-const HABIT_META: Record<number, { icon: string; theme: ActivityTheme }> = {
-  0: { icon: '</>', theme: 'purple' },
-  1: { icon: '🏃', theme: 'red' },
-  2: { icon: '📖', theme: 'coral' },
-  3: { icon: '🧘', theme: 'purple' },
-  4: { icon: '🗣', theme: 'red' },
-  5: { icon: '⭐', theme: 'coral' },
+const HABIT_META: Record<number, { icon: React.ReactNode; theme: ActivityTheme }> = {
+  0: { icon: <HiCodeBracket size={24} />, theme: 'purple' },
+  1: { icon: <LuDumbbell size={24} />, theme: 'red' },
+  2: { icon: <HiBookOpen size={24} />, theme: 'coral' },
+  3: { icon: <LuBrain size={24} />, theme: 'purple' },
+  4: { icon: <HiLanguage size={24} />, theme: 'red' },
+  5: { icon: <HiStar size={24} />, theme: 'coral' },
 };
 
 const HABIT_TYPE_NAMES: Record<number, string> = {
@@ -38,21 +42,10 @@ const SCROLL_AMOUNT = VISIBLE_WIDTH + CARD_GAP;
 /* ── Badge service URL (configurable via env) ── */
 const BADGE_SERVICE_URL = (import.meta as any).env?.VITE_BADGE_SERVICE_URL || 'http://localhost:3001';
 
-/* ── Helpers ── */
-function formatTimeUntilNext(lastCheckIn: number): string {
-  if (lastCheckIn === 0) return 'Now';
-  const nextCheckIn = lastCheckIn + 86400; // 24h after last
-  const nowSec = Math.floor(Date.now() / 1000);
-  const remaining = nextCheckIn - nowSec;
-  if (remaining <= 0) return 'Now';
-  const hours = Math.floor(remaining / 3600);
-  const mins = Math.floor((remaining % 3600) / 60);
-  return `${hours}h ${mins}m`;
-}
-
 function Home(): React.ReactElement {
   const { account, isConnected } = useWallet();
   const { getUserHabits, getHabit, getPool, contract } = useStreakBeastCore();
+  const { notify, scheduleStreakReminder } = useNotifications();
 
   const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(false);
@@ -78,6 +71,13 @@ function Home(): React.ReactElement {
       setCurrentStreak(fetched.reduce((m, h) => Math.max(m, h.currentStreak), 0));
       setTotalStaked(fetched.filter((h) => h.active).reduce((s, h) => s + parseFloat(h.stakeAmount), 0).toFixed(2));
 
+      // Schedule daily streak reminder based on latest active check-in
+      const activeHabits = fetched.filter((h) => h.active);
+      if (activeHabits.length > 0) {
+        const latestCheckIn = Math.max(...activeHabits.map((h) => h.lastCheckIn));
+        scheduleStreakReminder(latestCheckIn);
+      }
+
       // Fetch reward pool total from active pools
       if (contract) {
         try {
@@ -97,7 +97,7 @@ function Home(): React.ReactElement {
       }
     } catch (e) { console.error('Failed to fetch habits:', e); setHabits([]); setCurrentStreak(0); setTotalStaked('0.00'); setRewardPool('0.00'); }
     finally { setLoading(false); }
-  }, [account, isConnected, getUserHabits, getHabit, getPool, contract]);
+  }, [account, isConnected, getUserHabits, getHabit, getPool, contract, scheduleStreakReminder]);
 
   useEffect(() => { fetchHabits(); }, [fetchHabits]);
 
@@ -118,10 +118,11 @@ function Home(): React.ReactElement {
       .then((data) => {
         if (data.minted?.length > 0) {
           console.log('[AutoMint] Minted badges:', data.minted);
+          notify('Badge Minted!', `You earned ${data.minted.length} new NFT badge${data.minted.length > 1 ? 's' : ''}! Check Achievements to view.`);
         }
       })
       .catch((err) => console.warn('[AutoMint] Badge service unavailable:', err.message));
-  }, [account, isConnected, habits]);
+  }, [account, isConnected, habits, notify]);
 
   /* ── Scroll helpers ── */
   const checkScroll = useCallback(() => {
@@ -149,13 +150,14 @@ function Home(): React.ReactElement {
 
   const hasActiveHabit = habits.some((h) => h.active);
 
-  /* ── Compute "next in" from the most recent lastCheckIn ── */
-  const nextIn = useMemo(() => {
+  /* ── Live countdown to next check-in ── */
+  const nextCheckInTarget = useMemo(() => {
     const activeHabits = habits.filter((h) => h.active);
-    if (activeHabits.length === 0) return 'N/A';
+    if (activeHabits.length === 0) return 0;
     const latestCheckIn = Math.max(...activeHabits.map((h) => h.lastCheckIn));
-    return formatTimeUntilNext(latestCheckIn);
+    return latestCheckIn === 0 ? 1 : latestCheckIn + 86400;
   }, [habits]);
+  const { text: nextIn } = useCountdown(nextCheckInTarget);
 
   /* ── Compute integrity status: % of active habits verified today ── */
   const integrityPct = useMemo(() => {
@@ -167,7 +169,7 @@ function Home(): React.ReactElement {
 
   /* ── Build missions from real habits (no mock fallback) ── */
   const missions = habits.filter((h) => h.active).map((h) => {
-    const meta = HABIT_META[h.habitType] ?? { icon: '⭐', theme: 'coral' as const };
+    const meta = HABIT_META[h.habitType] ?? { icon: <HiStar size={24} />, theme: 'coral' as const };
     const verified = isVerifiedToday(h.lastCheckIn);
     return {
       theme: meta.theme,
