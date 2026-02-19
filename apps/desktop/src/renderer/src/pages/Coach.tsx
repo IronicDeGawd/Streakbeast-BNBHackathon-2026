@@ -7,7 +7,7 @@ import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
-import { CARD_SHADOW, FONT_HEADING, COLOR_PURPLE_ACCENT } from '../utils/tokens';
+import { CARD_SHADOW, FONT_HEADING, FONT_BODY, COLOR_PURPLE_ACCENT } from '../utils/tokens';
 import { useOpenClaw, type OpenClawMessage } from '../hooks/useOpenClaw';
 import { useOpenClawStatus } from '../contexts/OpenClawContext';
 import { useWallet } from '../contexts/WalletContext';
@@ -98,66 +98,105 @@ export default function Coach() {
                 <span style={{ fontSize: 40 }}>🤖</span>
                 <div>
                   <h2 style={{ ...typography.heading3, margin: 0 }}>OpenClaw Coach</h2>
-                  <span style={{ fontFamily: FONT_HEADING, fontSize: 14, color: daemonOnline ? '#90B171' : '#FF6B6B', fontWeight: 600 }}>
+                  <span style={{ fontFamily: FONT_BODY, fontSize: 14, color: daemonOnline ? '#90B171' : '#FF6B6B', fontWeight: 600 }}>
                     {daemonOnline ? '● Online' : '● Offline'}
                   </span>
                 </div>
               </div>
 
-              {/* Messages area */}
-              <div ref={chatRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 8 }}>
-                {displayMessages.map((msg) => (
-                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.sender === 'ai' ? 'flex-start' : 'flex-end' }}>
-                    <div style={{
-                      maxWidth: '70%', padding: '14px 20px',
-                      borderRadius: msg.sender === 'ai' ? '24px 24px 24px 6px' : '24px 24px 6px 24px',
-                      background: msg.sender === 'ai' ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}33, ${COLOR_PURPLE_ACCENT}22)`,
-                      border: msg.sender === 'ai' ? '1px solid rgba(255,255,255,0.08)' : `1px solid ${COLOR_PURPLE_ACCENT}44`,
-                      fontFamily: FONT_HEADING, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)', lineHeight: '1.5',
-                    }}>
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-                {isStreaming && displayMessages[displayMessages.length - 1]?.sender !== 'ai' && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                    <div style={{ padding: '14px 24px', borderRadius: '24px 24px 24px 6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: 6, alignItems: 'center' }}>
-                      {[0, 1, 2].map((i) => (
-                        <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: COLOR_PURPLE_ACCENT, opacity: 0.6, animation: `streakPulse 1.2s ease-in-out ${i * 0.15}s infinite` }} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Error banner */}
-              {error && (
-                <div style={{ padding: '8px 16px', borderRadius: 12, background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.2)', fontFamily: FONT_HEADING, fontSize: 12, color: '#FF6B6B', marginTop: 8 }}>
-                  {error}
+              {/* Setup messages when services unavailable */}
+              {!walletConnected && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, textAlign: 'center', padding: '0 40px' }}>
+                  <span style={{ fontSize: 56 }}>🔗</span>
+                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
+                    Connect your BNB wallet to access the AI Coach. Your streak data and habits are stored onchain — the coach needs your wallet to give personalized advice.
+                  </p>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                    Click "Connect" in the top right to get started.
+                  </p>
                 </div>
               )}
 
-              {/* Input area */}
-              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-                <input
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  placeholder="Ask your coach..."
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: '14px 24px', fontFamily: FONT_HEADING, fontSize: 16, color: '#fff', outline: 'none' }}
-                />
-                <button
-                  onClick={() => sendMessage()}
-                  disabled={isStreaming}
-                  style={{ width: 52, height: 52, borderRadius: '50%', border: 'none', background: `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}, #A78BFA)`, cursor: isStreaming ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s ease', boxShadow: '0 4px 16px rgba(139,92,246,0.3)', opacity: isStreaming ? 0.6 : 1 }}
-                  onMouseEnter={(e) => { if (!isStreaming) e.currentTarget.style.transform = 'scale(1.1)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                  </svg>
-                </button>
-              </div>
+              {walletConnected && !daemonOnline && (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, textAlign: 'center', padding: '0 40px' }}>
+                  <span style={{ fontSize: 56 }}>⚡</span>
+                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>OpenClaw Not Running</h3>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
+                    The AI Coach requires the OpenClaw daemon running locally. Start it to enable habit verification, coaching, and streak analysis.
+                  </p>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 400 }}>
+                    <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 8px' }}>Quick setup:</p>
+                    <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#A78BFA', display: 'block', lineHeight: 1.8 }}>
+                      openclaw skill register ./skill<br/>
+                      openclaw daemon start
+                    </code>
+                  </div>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                    Checking connection every 30 seconds...
+                  </p>
+                </div>
+              )}
+
+              {/* Chat UI — only when both wallet and daemon are ready */}
+              {walletConnected && daemonOnline && (
+                <>
+                  {/* Messages area */}
+                  <div ref={chatRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column', gap: 14, paddingRight: 8 }}>
+                    {displayMessages.map((msg) => (
+                      <div key={msg.id} style={{ display: 'flex', justifyContent: msg.sender === 'ai' ? 'flex-start' : 'flex-end' }}>
+                        <div style={{
+                          maxWidth: '70%', padding: '14px 20px',
+                          borderRadius: msg.sender === 'ai' ? '24px 24px 24px 6px' : '24px 24px 6px 24px',
+                          background: msg.sender === 'ai' ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}33, ${COLOR_PURPLE_ACCENT}22)`,
+                          border: msg.sender === 'ai' ? '1px solid rgba(255,255,255,0.08)' : `1px solid ${COLOR_PURPLE_ACCENT}44`,
+                          fontFamily: FONT_BODY, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.85)', lineHeight: '1.5',
+                        }}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))}
+                    {isStreaming && displayMessages[displayMessages.length - 1]?.sender !== 'ai' && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                        <div style={{ padding: '14px 24px', borderRadius: '24px 24px 24px 6px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {[0, 1, 2].map((i) => (
+                            <span key={i} style={{ width: 8, height: 8, borderRadius: '50%', background: COLOR_PURPLE_ACCENT, opacity: 0.6, animation: `streakPulse 1.2s ease-in-out ${i * 0.15}s infinite` }} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Error banner */}
+                  {error && (
+                    <div style={{ padding: '8px 16px', borderRadius: 12, background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.2)', fontFamily: FONT_BODY, fontSize: 12, color: '#FF6B6B', marginTop: 8 }}>
+                      {error}
+                    </div>
+                  )}
+
+                  {/* Input area */}
+                  <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                    <input
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                      placeholder="Ask your coach..."
+                      style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: '14px 24px', fontFamily: FONT_BODY, fontSize: 16, color: '#fff', outline: 'none' }}
+                    />
+                    <button
+                      onClick={() => sendMessage()}
+                      disabled={isStreaming}
+                      style={{ width: 52, height: 52, borderRadius: '50%', border: 'none', background: `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}, #A78BFA)`, cursor: isStreaming ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 0.2s ease', boxShadow: '0 4px 16px rgba(139,92,246,0.3)', opacity: isStreaming ? 0.6 : 1 }}
+                      onMouseEnter={(e) => { if (!isStreaming) e.currentTarget.style.transform = 'scale(1.1)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

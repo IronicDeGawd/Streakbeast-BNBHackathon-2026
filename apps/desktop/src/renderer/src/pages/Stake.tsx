@@ -7,7 +7,7 @@ import { MetricCard, ActivityCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
-import { CARD_SHADOW, FONT_HEADING, COLOR_PURPLE_ACCENT, STATUS_DONE, STATUS_ACTIVE } from '../utils/tokens';
+import { CARD_SHADOW, FONT_HEADING, FONT_BODY, COLOR_PURPLE_ACCENT, STATUS_DONE, STATUS_ACTIVE } from '../utils/tokens';
 import { useStreakBeastCore } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
 
@@ -58,6 +58,34 @@ export default function Stake() {
   };
 
   const canStake = isConnected && isReady && selectedHabit !== null && !isStaking && parseFloat(stakeAmount) > 0 && parseFloat(stakeAmount) <= maxStake;
+
+  if (!isConnected) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <h1 style={{ position: 'absolute', left: 40, top: 70, ...typography.heading1, animation: slideUp(0.1) }}>Stake & Commit</h1>
+        <div style={{ position: 'absolute', left: 40, top: 130, width: 780, height: 540, animation: slideUp(0.2) }}>
+          <div style={{ position: 'relative', width: 780, height: 540 }}>
+            <MainCardBlob idPrefix="stake_hero" top={-10} />
+            <div style={abs({ width: 200, height: 200, top: -24, left: -24, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(16px)', pointerEvents: 'none' })} />
+            <div style={{ position: 'relative', width: '100%', height: '100%', borderRadius: 85, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
+              <div style={abs({ inset: 0, ...cardBackground })} />
+              <div style={abs({ inset: 0, ...cardBackdrop })} />
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, textAlign: 'center', padding: '0 60px' }}>
+                <span style={{ fontSize: 56 }}>🔗</span>
+                <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
+                  Connect your BNB wallet to stake on your habits. Your commitment is secured onchain — put skin in the game and earn rewards for consistency.
+                </p>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                  Click "Connect" in the top right to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -194,11 +222,6 @@ export default function Stake() {
           </span>
         )}
 
-        {!isConnected && (
-          <span style={{ fontFamily: FONT_HEADING, fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.35)' }}>
-            Connect wallet to stake
-          </span>
-        )}
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
 import { cardBackground, cardBackdrop, slideUp, slideIn, typography } from '../styles/theme';
-import { CARD_SHADOW, FONT_HEADING } from '../utils/tokens';
+import { CARD_SHADOW, FONT_HEADING, FONT_BODY } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
 import { useStreakBadge, BADGE_THRESHOLDS, BADGE_NAMES } from '../hooks/useStreakBadge';
 import { useWallet } from '../contexts/WalletContext';
@@ -87,6 +87,34 @@ export default function Achievements() {
     progress: Math.min(100, Math.round((longestStreak / threshold) * 100)),
     earned: badgeOwnership[i],
   }));
+
+  if (!isConnected) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <h1 style={{ position: 'absolute', left: 40, top: 100, ...typography.heading1, animation: slideUp(0.1) }}>Achievements</h1>
+        <div style={{ position: 'absolute', left: 40, top: 360, width: 1200, height: 620, animation: slideUp(0.3) }}>
+          <div style={{ position: 'relative', width: 1200, height: 620 }}>
+            <MainCardBlob idPrefix="ach_badges" top={-50} />
+            <div style={abs({ width: 250, height: 250, top: -30, left: -30, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,170,80,.3), transparent 60%)', filter: 'blur(20px)', pointerEvents: 'none' })} />
+            <div style={{ position: 'relative', width: '100%', height: '85%', borderRadius: 85, overflow: 'hidden', boxShadow: CARD_SHADOW }}>
+              <div style={abs({ inset: 0, ...cardBackground })} />
+              <div style={abs({ inset: 0, ...cardBackdrop })} />
+              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, textAlign: 'center', padding: '0 60px' }}>
+                <span style={{ fontSize: 56 }}>🔗</span>
+                <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
+                  Connect your BNB wallet to view your NFT badge collection. Badges are minted onchain as you hit streak milestones — from your first day to a full year.
+                </p>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                  Click "Connect" in the top right to get started.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>

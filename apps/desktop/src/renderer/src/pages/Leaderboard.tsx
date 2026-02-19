@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { RankCard, LeaderboardMainCard } from '../components/cards';
 import { useStreakBeastCore, type LeaderboardEntry } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
-import { FONT_HEADING } from '../utils/tokens';
+import { FONT_HEADING, FONT_BODY } from '../utils/tokens';
 
 const HABIT_TYPE_NAMES: Record<number, string> = {
   0: 'Coding', 1: 'Exercise', 2: 'Reading',
@@ -100,8 +100,12 @@ export default function Leaderboard() {
 
   if (!isConnected) {
     return (
-      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: FONT_HEADING, fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>Connect wallet to view leaderboard</span>
+      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <span style={{ fontSize: 48 }}>🏆</span>
+        <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+        <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 340, textAlign: 'center', lineHeight: 1.6 }}>
+          Connect your BNB wallet to view the leaderboard and see how you rank against other habit trackers.
+        </p>
       </div>
     );
   }
