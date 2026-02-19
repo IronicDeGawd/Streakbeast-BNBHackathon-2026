@@ -1,5 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { join, resolve } from 'path'
+import { existsSync, mkdirSync, cpSync } from 'fs'
+import { homedir } from 'os'
 
 const isDev = !app.isPackaged
 const oauthTokens: Record<string, string> = {}
@@ -85,8 +87,32 @@ app.on('open-url', (event, url) => {
   }
 })
 
+/** Copy bundled skill to ~/.openclaw/skills/streakbeast if not already present */
+function installSkill(): void {
+  const dest = join(homedir(), '.openclaw', 'skills', 'streakbeast')
+  if (existsSync(join(dest, 'SKILL.md'))) return // already installed
+
+  const src = isDev
+    ? resolve(__dirname, '..', '..', '..', '..', 'skill')
+    : join(process.resourcesPath, 'skill')
+
+  if (!existsSync(join(src, 'SKILL.md'))) {
+    console.warn('[Skill] Source skill not found at', src)
+    return
+  }
+
+  try {
+    mkdirSync(dest, { recursive: true })
+    cpSync(src, dest, { recursive: true })
+    console.log('[Skill] Installed streakbeast skill to', dest)
+  } catch (e) {
+    console.error('[Skill] Failed to install skill:', e)
+  }
+}
+
 app.whenReady().then(() => {
   app.setAppUserModelId?.('com.streakbeast')
+  installSkill()
 
   createWindow()
 
