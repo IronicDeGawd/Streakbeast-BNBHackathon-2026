@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { WalletProvider } from './contexts/WalletContext';
 import { OpenClawProvider } from './contexts/OpenClawContext';
 import Layout from './components/Layout';
 import Sidebar from './components/Sidebar';
 import { WalletStatusCard } from './components/cards';
+import OnboardingModal from './components/OnboardingModal';
 import Home from './pages/Home';
 import Stake from './pages/Stake';
 import Leaderboard from './pages/Leaderboard';
@@ -13,11 +14,21 @@ import Coach from './pages/Coach';
 import Settings from './pages/Settings';
 import { useViewportScale, CANVAS_W, CANVAS_H } from './hooks/useViewportScale';
 
+const ONBOARDING_KEY = 'streakbeast_onboarding_complete';
+
 /**
  * Inner app component — needs to be inside HashRouter for Sidebar's useLocation
  */
 function AppContent(): React.ReactElement {
   const scale = useViewportScale();
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !localStorage.getItem(ONBOARDING_KEY)
+  );
+
+  const completeOnboarding = () => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
 
   return (
     <Layout>
@@ -59,6 +70,9 @@ function AppContent(): React.ReactElement {
           </Routes>
         </div>
       </div>
+
+      {/* First-launch onboarding guide */}
+      {showOnboarding && <OnboardingModal onComplete={completeOnboarding} />}
     </Layout>
   );
 }
