@@ -8,11 +8,11 @@
  * Badge image paths (relative to public/)
  */
 export const BADGE_IMAGES: Record<number, string> = {
-  0: '/badges/first-flame.png',
-  1: '/badges/week-warrior.png',
-  2: '/badges/monthly-master.png',
-  3: '/badges/century-club.png',
-  4: '/badges/iron-will.png',
+  0: './badges/first-flame.png',
+  1: './badges/week-warrior.png',
+  2: './badges/monthly-master.png',
+  3: './badges/century-club.png',
+  4: './badges/iron-will.png',
 };
 
 /**

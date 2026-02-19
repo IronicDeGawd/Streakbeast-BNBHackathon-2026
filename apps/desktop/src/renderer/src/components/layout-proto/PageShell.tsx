@@ -17,7 +17,7 @@ export default function PageShell({ children }: PageShellProps) {
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        backgroundImage: "url('/background.png')",
+        backgroundImage: "url('./background.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",

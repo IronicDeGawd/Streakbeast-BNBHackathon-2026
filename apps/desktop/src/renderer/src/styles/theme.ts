@@ -317,7 +317,7 @@ export const RANK_THEMES: Record<RankPosition, RankThemeConfig> = {
 // ── Shared Card Styles ──
 
 export const cardBackground: CSSProperties = {
-  background: `url("/maincard.png") center / cover no-repeat`,
+  background: `url("./maincard.png") center / cover no-repeat`,
 };
 
 export const cardShadow: CSSProperties = {
