@@ -8,7 +8,7 @@ import React, { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import PetCanvas from '../components/PetCanvas';
 import { MainCard, MetricCard, ActivityCard } from '../components/cards';
 import { slideUp, typography } from '../styles/theme';
-import { STATUS_DONE, STATUS_ACTIVE, EASE_SPRING } from '../utils/tokens';
+import { STATUS_DONE, STATUS_ACTIVE, EASE_SPRING, FONT_HEADING } from '../utils/tokens';
 import { useStreakBeastCore, Habit } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
 import type { ActivityTheme } from '../styles/theme';
@@ -264,11 +264,11 @@ function Home(): React.ReactElement {
           <style>{`.missions-scroll::-webkit-scrollbar { display: none; }`}</style>
           {loading ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: 40 }}>
-              <span style={{ fontFamily: "'Inter'", fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>Loading habits…</span>
+              <span style={{ fontFamily: FONT_HEADING, fontSize: 20, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>Loading habits…</span>
             </div>
           ) : missions.length === 0 ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', padding: 40 }}>
-              <span style={{ fontFamily: "'Inter'", fontSize: 16, color: 'rgba(255,255,255,0.4)' }}>
+              <span style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.45)' }}>
                 {isConnected ? 'No active habits. Stake to get started!' : 'Connect wallet to view habits'}
               </span>
             </div>

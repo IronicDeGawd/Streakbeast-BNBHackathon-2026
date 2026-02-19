@@ -108,11 +108,11 @@ export default function Coach() {
               {!walletConnected && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, textAlign: 'center', padding: '0 40px' }}>
                   <span style={{ fontSize: 56 }}>🔗</span>
-                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
+                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 400 }}>
                     Connect your BNB wallet to access the AI Coach. Your streak data and habits are stored onchain — the coach needs your wallet to give personalized advice.
                   </p>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                     Click "Connect" in the top right to get started.
                   </p>
                 </div>
@@ -121,18 +121,18 @@ export default function Coach() {
               {walletConnected && !daemonOnline && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, textAlign: 'center', padding: '0 40px' }}>
                   <span style={{ fontSize: 56 }}>⚡</span>
-                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>OpenClaw Not Running</h3>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
+                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>OpenClaw Not Running</h3>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
                     The AI Coach requires the OpenClaw gateway running locally. The StreakBeast skill is installed automatically by this app.
                   </p>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 440 }}>
-                    <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>Install OpenClaw &amp; start the gateway:</p>
-                    <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#A78BFA', display: 'block', lineHeight: 1.8 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '20px 28px', textAlign: 'left', width: '100%', maxWidth: 440 }}>
+                    <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.4)', margin: '0 0 12px' }}>Install OpenClaw &amp; start the gateway:</p>
+                    <code style={{ fontFamily: 'monospace', fontSize: 15, color: '#A78BFA', display: 'block', lineHeight: 1.8 }}>
                       curl -fsSL https://openclaw.ai/install.sh | bash<br/>
                       openclaw onboard --install-daemon
                     </code>
                   </div>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 14, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                     Checking connection every 30 seconds...
                   </p>
                 </div>

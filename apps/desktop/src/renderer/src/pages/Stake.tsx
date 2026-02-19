@@ -51,7 +51,21 @@ export default function Stake() {
       setTxMessage(`Staked successfully! Tx: ${receipt?.hash ? `${(receipt.hash as string).slice(0, 10)}…` : 'confirmed'}`);
     } catch (e: any) {
       setTxStatus('error');
-      setTxMessage(e?.reason || e?.message || 'Transaction failed');
+      const raw = e?.reason || e?.message || 'Transaction failed';
+      // Map common blockchain errors to user-friendly messages
+      if (/insufficient funds/i.test(raw)) {
+        setTxMessage('Insufficient balance. Please add more tBNB to your wallet.');
+      } else if (/user rejected|user denied/i.test(raw)) {
+        setTxMessage('Transaction cancelled.');
+      } else if (/nonce/i.test(raw)) {
+        setTxMessage('Transaction conflict. Please try again.');
+      } else if (/gas/i.test(raw)) {
+        setTxMessage('Not enough gas to complete the transaction.');
+      } else if (raw.length > 80) {
+        setTxMessage('Transaction failed. Please try again.');
+      } else {
+        setTxMessage(raw);
+      }
     } finally {
       setIsStaking(false);
     }
@@ -72,11 +86,11 @@ export default function Stake() {
               <div style={abs({ inset: 0, ...cardBackdrop })} />
               <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, textAlign: 'center', padding: '0 60px' }}>
                 <span style={{ fontSize: 56 }}>🔗</span>
-                <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
-                <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
+                <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 400 }}>
                   Connect your BNB wallet to stake on your habits. Your commitment is secured onchain — put skin in the game and earn rewards for consistency.
                 </p>
-                <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                   Click "Connect" in the top right to get started.
                 </p>
               </div>
@@ -215,7 +229,7 @@ export default function Stake() {
         {/* Transaction status message */}
         {txStatus !== 'idle' && (
           <span style={{
-            fontFamily: FONT_HEADING, fontSize: 13, fontWeight: 600,
+            fontFamily: FONT_BODY, fontSize: 16, fontWeight: 600, maxWidth: 400, textAlign: 'center', lineHeight: 1.5,
             color: txStatus === 'success' ? '#90B171' : txStatus === 'error' ? '#FF6B6B' : 'rgba(255,255,255,0.5)',
           }}>
             {txMessage}
