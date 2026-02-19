@@ -1,5 +1,9 @@
 appId: com.streakbeast.desktop
 productName: StreakBeast
+protocols:
+  - name: StreakBeast
+    schemes:
+      - streakbeast
 directories:
   buildResources: resources
   output: release

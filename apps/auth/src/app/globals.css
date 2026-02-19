@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #1a0e2e;
+  --color-card: rgba(255, 255, 255, 0.05);
+  --color-purple: #8b5cf6;
+  --color-purple-dim: #6d28d9;
+  --color-success: #90b171;
+  --color-error: #ff6b6b;
+}
+
+body {
+  background: var(--color-bg);
+  color: #ffffff;
+}
