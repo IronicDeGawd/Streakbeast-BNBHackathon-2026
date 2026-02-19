@@ -3,6 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { HiLink, HiLockClosed } from 'react-icons/hi2';
 import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
@@ -100,12 +101,12 @@ export default function Achievements() {
               <div style={abs({ inset: 0, ...cardBackground })} />
               <div style={abs({ inset: 0, ...cardBackdrop })} />
               <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 20, textAlign: 'center', padding: '0 60px' }}>
-                <span style={{ fontSize: 56 }}>🔗</span>
-                <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
-                <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
+                <span style={{ fontSize: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiLink size={56} color="rgba(255,255,255,0.7)" /></span>
+                <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
                   Connect your BNB wallet to view your NFT badge collection. Badges are minted onchain as you hit streak milestones — from your first day to a full year.
                 </p>
-                <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                   Click "Connect" in the top right to get started.
                 </p>
               </div>
@@ -160,7 +161,7 @@ export default function Achievements() {
 
               {loading ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
-                  <span style={{ fontFamily: FONT_HEADING, fontSize: 16, color: 'rgba(255,255,255,0.5)' }}>Loading badges…</span>
+                  <span style={{ fontFamily: FONT_HEADING, fontSize: 20, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>Loading badges…</span>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 24, flex: 1 }}>
@@ -188,19 +189,19 @@ export default function Achievements() {
                           transition: 'filter 0.3s ease, opacity 0.3s ease',
                         }}
                       />
-                      <span style={{ fontFamily: FONT_HEADING, fontWeight: 800, fontSize: 16, color: badge.earned ? '#fff' : 'rgba(255,255,255,0.35)', textAlign: 'center' }}>{badge.name}</span>
-                      <span style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: badge.earned ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: '1.4' }}>{badge.description}</span>
+                      <span style={{ fontFamily: FONT_HEADING, fontWeight: 800, fontSize: 18, color: badge.earned ? '#fff' : 'rgba(255,255,255,0.35)', textAlign: 'center' }}>{badge.name}</span>
+                      <span style={{ fontFamily: FONT_BODY, fontWeight: 500, fontSize: 14, color: badge.earned ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: '1.4' }}>{badge.description}</span>
 
                       {badge.earned ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(144,177,113,0.2)', color: '#90B171', fontSize: 12, fontWeight: 700, fontFamily: FONT_HEADING, borderRadius: 20, padding: '4px 12px' }}>✓ Earned</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(144,177,113,0.2)', color: '#90B171', fontSize: 14, fontWeight: 700, fontFamily: FONT_HEADING, borderRadius: 20, padding: '5px 14px' }}>✓ Earned</span>
                       ) : (
                         <div style={{ width: '100%' }}>
                           <div style={{ height: 6, background: 'rgba(255,255,255,0.1)', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
                             <div style={{ height: '100%', width: `${badge.progress}%`, background: 'linear-gradient(90deg, #8B5CF6, #A78BFA)', borderRadius: 3, transition: 'width 0.6s ease' }} />
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontFamily: FONT_HEADING, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>{badge.progress}%</span>
-                            <span style={{ fontSize: 14, opacity: 0.3 }}>🔒</span>
+                            <span style={{ fontFamily: FONT_HEADING, fontSize: 14, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>{badge.progress}%</span>
+                            <span style={{ fontSize: 14, opacity: 0.3, display: 'flex', alignItems: 'center' }}><HiLockClosed size={14} color="rgba(255,255,255,0.5)" /></span>
                           </div>
                         </div>
                       )}

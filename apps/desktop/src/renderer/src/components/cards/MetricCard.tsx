@@ -2,8 +2,10 @@
  * MetricCard — Unified metric card with theme prop.
  * Replaces MetricCard1 (red), MetricCard2 (orange), MetricCard3 (purple).
  */
+import { useRef } from "react";
 import { METRIC_THEMES, slideIn, type MetricTheme } from "../../styles/theme";
 import { FONT_HEADING } from "../../utils/tokens";
+import { useBlobBreathing, useParallaxHover } from "../../hooks/useAnimations";
 
 interface MetricCardProps {
   theme: MetricTheme;
@@ -24,8 +26,14 @@ export default function MetricCard({
   const filterId = `f_blob_metric_${theme}`;
   const bodyFilterId = `f_body_metric_${theme}`;
 
+  const blobRef = useRef<SVGPathElement>(null);
+  const parallaxRef = useParallaxHover(8);
+
+  useBlobBreathing(blobRef, t.blobPath, { intensity: 3, duration: 5500 });
+
   return (
     <div
+      ref={parallaxRef}
       style={{
         position: "relative",
         animation: slideIn(delay),
@@ -43,18 +51,19 @@ export default function MetricCard({
         viewBox={t.viewBox}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ width: parseInt(t.viewBox.split(" ")[2]), height: parseInt(t.viewBox.split(" ")[3]), display: "block" }}
+        style={{ width: parseInt(t.viewBox.split(" ")[2] || "0"), height: parseInt(t.viewBox.split(" ")[3] || "0"), display: "block" }}
       >
         {/* Blob behind card */}
-        <g filter={`url(#${filterId})`}>
+        <g filter={`url(#${filterId})`} data-depth="blob">
           <path
+            ref={blobRef}
             d={t.blobPath}
             fill={t.blobGradient ? `url(#${t.blobGradient.id})` : t.blobColor}
           />
         </g>
 
         {/* Card body */}
-        <g filter={`url(#${bodyFilterId})`}>
+        <g filter={`url(#${bodyFilterId})`} data-depth="body">
           <path d={t.bodyPath} fill={t.bodyColor} />
         </g>
 

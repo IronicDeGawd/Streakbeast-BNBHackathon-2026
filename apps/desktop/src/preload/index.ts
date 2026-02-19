@@ -18,7 +18,10 @@ const api = {
     },
     storeToken: (provider: string, token: string) => ipcRenderer.invoke('oauth:store-token', provider, token),
     getToken: (provider: string) => ipcRenderer.invoke('oauth:get-token', provider),
-  }
+  },
+  notify: (title: string, body: string) => ipcRenderer.invoke('notify:show', title, body),
+  openclawFetch: (url: string, init: { method?: string; headers?: Record<string, string>; body?: string }) =>
+    ipcRenderer.invoke('openclaw:fetch', url, init) as Promise<{ ok: boolean; status: number; text: string }>
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

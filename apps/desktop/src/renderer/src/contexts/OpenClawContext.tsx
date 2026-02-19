@@ -24,14 +24,15 @@ export function OpenClawProvider({ children }: { children: React.ReactNode }) {
   const checkStatus = useCallback(async (): Promise<boolean> => {
     setIsChecking(true)
     try {
-      const headers: Record<string, string> = {}
-      if (OPENCLAW_TOKEN) headers['Authorization'] = `Bearer ${OPENCLAW_TOKEN}`
-      const resp = await fetch(`${OPENCLAW_URL}/v1/models`, {
-        signal: AbortSignal.timeout(3000),
-        headers,
+      // Use /tools/invoke (always enabled) for health check — auth token injected by main process
+      const resp = await window.api?.openclawFetch(`${OPENCLAW_URL}/tools/invoke`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: 'sessions_list', action: 'json', args: {} }),
       })
-      setIsConnected(resp.ok)
-      return resp.ok
+      const ok = resp?.ok ?? false
+      setIsConnected(ok)
+      return ok
     } catch {
       setIsConnected(false)
       return false

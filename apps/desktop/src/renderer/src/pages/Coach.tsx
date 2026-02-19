@@ -3,6 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useRef, useEffect } from 'react';
+import { HiCpuChip, HiLink, HiBolt, HiChatBubbleLeft, HiSparkles, HiFire } from 'react-icons/hi2';
 import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
@@ -13,6 +14,24 @@ import { useOpenClawStatus } from '../contexts/OpenClawContext';
 import { useWallet } from '../contexts/WalletContext';
 import { useStreakBeastCore } from '../hooks/useStreakBeastCore';
 
+/** Lightweight inline markdown → React nodes (bold, italic, inline code) */
+function renderMarkdown(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(`(.+?)`)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+    if (match[2]) parts.push(<strong key={key++}>{match[2]}</strong>);
+    else if (match[4]) parts.push(<em key={key++}>{match[4]}</em>);
+    else if (match[6]) parts.push(<code key={key++} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 4, padding: '1px 5px', fontSize: '0.9em' }}>{match[6]}</code>);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+  return parts;
+}
+
 interface DisplayMessage {
   id: number;
   text: string;
@@ -21,21 +40,35 @@ interface DisplayMessage {
 
 const QUICK_ACTIONS = ['How am I doing?', 'Motivation tips', 'Streak analysis', 'Habit suggestions'];
 
-const WELCOME_MSG = "Hey there! I'm your AI coach powered by OpenClaw. Ask me anything about your habits, streaks, or get motivation tips! 🚀";
+const WELCOME_MSG = "Hey there! I'm your AI coach powered by OpenClaw. Ask me anything about your habits, streaks, or get motivation tips!";
 
 export default function Coach() {
   const { account, isConnected: walletConnected } = useWallet();
   const { getUserHabits, getHabit } = useStreakBeastCore();
   const { isConnected: daemonOnline } = useOpenClawStatus();
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   const { sendMessage: openClawSend, messages: openClawMessages, isStreaming, error } = useOpenClaw({
     model: 'agent:streakbeast',
-    systemPrompt: `You are the StreakBeast AI Coach. The user's wallet address is ${account || 'not connected'}. Help them with habit tracking, motivation, and streak analysis. Be encouraging but concise.`,
+    systemPrompt: [
+      'You are StreakBeast Coach — a sharp, motivating AI habit coach inside the StreakBeast desktop app.',
+      'StreakBeast is a gamified onchain habit tracker on opBNB where users stake crypto, build streaks, and earn rewards.',
+      `User wallet: ${account || 'not connected'}.`,
+      `Current longest streak: ${currentStreak} day${currentStreak === 1 ? '' : 's'}.`,
+      '',
+      'Rules:',
+      '- Be concise (2-4 sentences max). No filler.',
+      '- Be encouraging but real — celebrate wins, give honest advice.',
+      '- Focus on habits, streaks, motivation, and consistency.',
+      '- Reference their streak data when relevant.',
+      '- Never ask who the user is or what your personality should be — you already know.',
+      '- If asked "how am I doing", analyze their streak and give actionable feedback.',
+      '- Use 1-2 emojis max per message. No emoji spam.',
+    ].join('\n'),
     userId: account || undefined,
   });
 
   const [inputValue, setInputValue] = useState('');
-  const [currentStreak, setCurrentStreak] = useState(0);
   const chatRef = useRef<HTMLDivElement>(null);
 
   // Fetch real streak from contract
@@ -78,7 +111,7 @@ export default function Coach() {
 
       {/* AI Status */}
       <div style={{ position: 'absolute', left: 840, top: 140, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-        <MetricCard theme="purple" title="Coach Status" value={daemonOnline ? "✨ Active" : "⚡ Offline"} delay={0.3} />
+        <MetricCard theme="purple" title="Coach Status" value={daemonOnline ? "Active" : "Offline"} delay={0.3} />
       </div>
 
       {/* Main chat card with blob + glow */}
@@ -95,7 +128,7 @@ export default function Coach() {
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', padding: '48px 50px 30px' }}>
               {/* Chat header */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, animation: slideIn(0.25) }}>
-                <span style={{ fontSize: 40 }}>🤖</span>
+                <span style={{ fontSize: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiCpuChip size={40} color="rgba(255,255,255,0.7)" /></span>
                 <div>
                   <h2 style={{ ...typography.heading3, margin: 0 }}>OpenClaw Coach</h2>
                   <span style={{ fontFamily: FONT_BODY, fontSize: 14, color: daemonOnline ? '#90B171' : '#FF6B6B', fontWeight: 600 }}>
@@ -107,12 +140,12 @@ export default function Coach() {
               {/* Setup messages when services unavailable */}
               {!walletConnected && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, textAlign: 'center', padding: '0 40px' }}>
-                  <span style={{ fontSize: 56 }}>🔗</span>
-                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 380 }}>
+                  <span style={{ fontSize: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiLink size={56} color="rgba(255,255,255,0.7)" /></span>
+                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 400 }}>
                     Connect your BNB wallet to access the AI Coach. Your streak data and habits are stored onchain — the coach needs your wallet to give personalized advice.
                   </p>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                     Click "Connect" in the top right to get started.
                   </p>
                 </div>
@@ -120,19 +153,19 @@ export default function Coach() {
 
               {walletConnected && !daemonOnline && (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, textAlign: 'center', padding: '0 40px' }}>
-                  <span style={{ fontSize: 56 }}>⚡</span>
-                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>OpenClaw Not Running</h3>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
+                  <span style={{ fontSize: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiBolt size={56} color="rgba(255,255,255,0.7)" /></span>
+                  <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>OpenClaw Not Running</h3>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, margin: 0, maxWidth: 420 }}>
                     The AI Coach requires the OpenClaw gateway running locally. The StreakBeast skill is installed automatically by this app.
                   </p>
-                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 24px', textAlign: 'left', width: '100%', maxWidth: 440 }}>
-                    <p style={{ fontFamily: FONT_BODY, fontSize: 13, color: 'rgba(255,255,255,0.4)', margin: '0 0 10px' }}>Install OpenClaw &amp; start the gateway:</p>
-                    <code style={{ fontFamily: 'monospace', fontSize: 13, color: '#A78BFA', display: 'block', lineHeight: 1.8 }}>
+                  <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '20px 28px', textAlign: 'left', width: '100%', maxWidth: 440 }}>
+                    <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.4)', margin: '0 0 12px' }}>Install OpenClaw &amp; start the gateway:</p>
+                    <code style={{ fontFamily: 'monospace', fontSize: 15, color: '#A78BFA', display: 'block', lineHeight: 1.8 }}>
                       curl -fsSL https://openclaw.ai/install.sh | bash<br/>
                       openclaw onboard --install-daemon
                     </code>
                   </div>
-                  <p style={{ fontFamily: FONT_BODY, fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                  <p style={{ fontFamily: FONT_BODY, fontSize: 14, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                     Checking connection every 30 seconds...
                   </p>
                 </div>
@@ -150,9 +183,9 @@ export default function Coach() {
                           borderRadius: msg.sender === 'ai' ? '24px 24px 24px 6px' : '24px 24px 6px 24px',
                           background: msg.sender === 'ai' ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${COLOR_PURPLE_ACCENT}33, ${COLOR_PURPLE_ACCENT}22)`,
                           border: msg.sender === 'ai' ? '1px solid rgba(255,255,255,0.08)' : `1px solid ${COLOR_PURPLE_ACCENT}44`,
-                          fontFamily: FONT_BODY, fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.85)', lineHeight: '1.5',
+                          fontFamily: FONT_BODY, fontSize: 16, fontWeight: 500, color: '#ffffffee', lineHeight: '1.55',
                         }}>
-                          {msg.text}
+                          {renderMarkdown(msg.text)}
                         </div>
                       </div>
                     ))}
@@ -169,7 +202,7 @@ export default function Coach() {
 
                   {/* Error banner */}
                   {error && (
-                    <div style={{ padding: '8px 16px', borderRadius: 12, background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.2)', fontFamily: FONT_BODY, fontSize: 12, color: '#FF6B6B', marginTop: 8 }}>
+                    <div style={{ padding: '8px 16px', borderRadius: 12, background: 'rgba(255,100,100,0.1)', border: '1px solid rgba(255,100,100,0.2)', fontFamily: FONT_BODY, fontSize: 14, color: '#FF6B6B', marginTop: 8 }}>
                       {error}
                     </div>
                   )}
@@ -211,21 +244,21 @@ export default function Coach() {
             disabled={isStreaming}
             style={{
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, padding: '16px 28px',
-              fontFamily: FONT_HEADING, fontWeight: 600, fontSize: 14, cursor: isStreaming ? 'wait' : 'pointer',
+              fontFamily: FONT_HEADING, fontWeight: 600, fontSize: 16, cursor: isStreaming ? 'wait' : 'pointer',
               background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.7)',
               transition: 'all 0.25s ease', width: 380, textAlign: 'left',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.transform = 'translateX(6px)'; e.currentTarget.style.borderColor = `${COLOR_PURPLE_ACCENT}44`; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; e.currentTarget.style.transform = 'translateX(0)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
           >
-            💬 {action}
+            <HiChatBubbleLeft size={18} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 8 }} />{action}
           </button>
         </div>
       ))}
 
       {/* Streak info card — real data */}
       <div style={{ position: 'absolute', left: 860, top: 690, transform: 'scale(0.9)', transformOrigin: 'top left' }}>
-        <MetricCard theme="orange" title="Your Streak" value={`🔥 ${currentStreak} days`} delay={0.6} />
+        <MetricCard theme="orange" title="Your Streak" value={`${currentStreak} days`} delay={0.6} />
       </div>
     </div>
   );

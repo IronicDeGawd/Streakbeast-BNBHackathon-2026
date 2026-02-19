@@ -2,7 +2,8 @@
  * Settings — User preferences page with real wallet data, linked accounts, and OpenClaw status.
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { LuActivity, LuGithub, LuGraduationCap } from 'react-icons/lu';
 import { MetricCard } from '../components/cards';
 import { MainCardBlob } from '../components/blobs';
 import { abs } from '../utils/styles';
@@ -12,10 +13,10 @@ import { useWallet } from '../contexts/WalletContext';
 import { useLinkedAccounts } from '../hooks/useLinkedAccounts';
 import { useOpenClawStatus } from '../contexts/OpenClawContext';
 
-const ACCOUNT_META: { key: 'strava' | 'github' | 'duolingo'; name: string; icon: string }[] = [
-  { key: 'strava', name: 'Strava', icon: '🏃' },
-  { key: 'github', name: 'GitHub', icon: '💙' },
-  { key: 'duolingo', name: 'Duolingo', icon: '🦉' },
+const ACCOUNT_META: { key: 'strava' | 'github' | 'duolingo'; name: string; icon: React.ReactNode }[] = [
+  { key: 'strava', name: 'Strava', icon: <LuActivity size={24} color="#FC4C02" /> },
+  { key: 'github', name: 'GitHub', icon: <LuGithub size={24} color="#fff" /> },
+  { key: 'duolingo', name: 'Duolingo', icon: <LuGraduationCap size={24} color="#58CC02" /> },
 ];
 
 /* ── Network name from chainId ── */
@@ -149,25 +150,26 @@ export default function Settings() {
               <h2 style={{ ...typography.heading2, marginBottom: 8 }}>Linked Accounts</h2>
 
               {ACCOUNT_META.map((acc, i) => {
-                const data = accounts[acc.key];
+                const linked = accounts[acc.key];
+                const isLinked = linked?.connected;
                 return (
                   <div key={acc.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: i < ACCOUNT_META.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none', animation: slideIn(0.4 + i * 0.08) }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                      <span style={{ fontSize: 28 }}>{acc.icon}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28 }}>{acc.icon}</span>
                       <div>
                         <div style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 16, color: '#fff' }}>{acc.name}</div>
-                        <div style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: data.connected ? '#90B171' : 'rgba(255,255,255,0.3)' }}>
-                          {data.connected ? (data.username || 'Connected') : 'Not connected'}
+                        <div style={{ fontFamily: FONT_HEADING, fontWeight: 500, fontSize: 12, color: isLinked ? 'rgba(144,177,113,0.8)' : 'rgba(255,255,255,0.3)' }}>
+                          {isLinked ? linked.username || 'Connected' : 'Not connected'}
                         </div>
                       </div>
                     </div>
                     <button
-                      onClick={() => data.connected ? disconnectAccount(acc.key) : connect(acc.key)}
-                      style={{ border: '1px solid rgba(255,255,255,0.15)', borderRadius: 16, padding: '8px 20px', fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 12, cursor: 'pointer', background: 'rgba(255,255,255,0.05)', color: data.connected ? '#FF6B6B' : 'rgba(255,255,255,0.6)', transition: 'all 0.2s ease' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = data.connected ? 'rgba(255,100,100,0.1)' : `${COLOR_PURPLE_ACCENT}22`; e.currentTarget.style.borderColor = data.connected ? 'rgba(255,100,100,0.3)' : `${COLOR_PURPLE_ACCENT}44`; e.currentTarget.style.color = '#fff'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = data.connected ? '#FF6B6B' : 'rgba(255,255,255,0.6)'; }}
+                      onClick={() => isLinked ? disconnectAccount(acc.key) : connect(acc.key)}
+                      style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '8px 20px', fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 12, cursor: 'pointer', background: isLinked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)', color: isLinked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = '#fff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = isLinked ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'; e.currentTarget.style.color = isLinked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.5)'; }}
                     >
-                      {data.connected ? 'Disconnect' : 'Connect'}
+                      {isLinked ? 'Disconnect' : 'Connect'}
                     </button>
                   </div>
                 );
@@ -196,13 +198,16 @@ export default function Settings() {
               <h2 style={{ ...typography.heading2, marginBottom: 8 }}>Preferences</h2>
 
               {[
-                { label: 'Desktop Notifications', value: notifications, toggle: () => setNotifications(!notifications) },
-                { label: 'Sound Effects', value: soundEffects, toggle: () => setSoundEffects(!soundEffects) },
-                { label: 'Auto-verify Habits', value: autoVerify, toggle: () => setAutoVerify(!autoVerify) },
+                { label: 'Desktop Notifications', value: notifications, toggle: () => setNotifications(!notifications), disabled: false },
+                { label: 'Sound Effects', value: soundEffects, toggle: () => setSoundEffects(!soundEffects), disabled: true },
+                { label: 'Auto-verify Habits', value: autoVerify, toggle: () => setAutoVerify(!autoVerify), disabled: true },
               ].map((pref, i) => (
-                <div key={pref.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: slideIn(0.6 + i * 0.06) }}>
-                  <span style={{ fontFamily: FONT_HEADING, fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>{pref.label}</span>
-                  <button onClick={pref.toggle} style={toggleStyle(pref.value)}>
+                <div key={pref.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', animation: slideIn(0.6 + i * 0.06), opacity: pref.disabled ? 0.35 : 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontFamily: FONT_HEADING, fontSize: 16, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>{pref.label}</span>
+                    {pref.disabled && <span style={{ fontFamily: FONT_HEADING, fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '2px 8px' }}>Soon</span>}
+                  </div>
+                  <button onClick={pref.disabled ? undefined : pref.toggle} style={{ ...toggleStyle(pref.value), cursor: pref.disabled ? 'not-allowed' : 'pointer' }}>
                     <div style={knobStyle(pref.value)} />
                   </button>
                 </div>

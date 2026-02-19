@@ -3,6 +3,7 @@
  * Renders inside the scaled canvas (App.tsx handles PageShell, Sidebar, scaling).
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { HiTrophy } from 'react-icons/hi2';
 import { RankCard, LeaderboardMainCard } from '../components/cards';
 import { useStreakBeastCore, type LeaderboardEntry } from '../hooks/useStreakBeastCore';
 import { useWallet } from '../contexts/WalletContext';
@@ -46,7 +47,7 @@ export default function Leaderboard() {
             const existing = seenAddresses.get(entry.address);
             if (existing !== undefined) {
               // Keep highest streak
-              if (entry.streak > allEntries[existing]?.streak) {
+              if (entry.streak > (entries[existing]?.streak ?? 0)) {
                 entries[existing] = {
                   ...entry,
                   habitType: habitTypeName,
@@ -85,35 +86,39 @@ export default function Leaderboard() {
 
   const top3 = filtered.slice(0, 3);
   const remaining = filtered.slice(3).map((entry, idx) => ({
-    ...entry,
     rank: idx + 4,
     address: shortenAddr(entry.address),
+    streak: entry.streak,
+    earned: entry.earned ?? '0 BNB',
+    habitType: entry.habitType ?? 'Custom',
   }));
-
-  if (loading) {
-    return (
-      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: FONT_HEADING, fontSize: 18, color: 'rgba(255,255,255,0.5)' }}>Loading leaderboard…</span>
-      </div>
-    );
-  }
 
   if (!isConnected) {
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-        <span style={{ fontSize: 48 }}>🏆</span>
-        <h3 style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
-        <p style={{ fontFamily: FONT_BODY, fontSize: 15, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 340, textAlign: 'center', lineHeight: 1.6 }}>
+        <span style={{ fontSize: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiTrophy size={48} color="rgba(255,255,255,0.7)" /></span>
+        <h3 style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: '#fff', margin: 0 }}>Connect Your Wallet</h3>
+        <p style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.5)', margin: 0, maxWidth: 380, textAlign: 'center', lineHeight: 1.6 }}>
           Connect your BNB wallet to view the leaderboard and see how you rank against other habit trackers.
         </p>
       </div>
     );
   }
 
-  if (allEntries.length === 0 && !loading) {
+  if (loading) {
     return (
       <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ fontFamily: FONT_HEADING, fontSize: 18, color: 'rgba(255,255,255,0.4)' }}>No participants yet. Be the first to stake!</span>
+        <span style={{ fontFamily: FONT_HEADING, fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>Loading leaderboard…</span>
+      </div>
+    );
+  }
+
+  if (allEntries.length === 0) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+        <span style={{ fontSize: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><HiTrophy size={48} color="rgba(255,255,255,0.7)" /></span>
+        <span style={{ fontFamily: FONT_HEADING, fontSize: 24, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>No participants yet</span>
+        <span style={{ fontFamily: FONT_BODY, fontSize: 17, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>Be the first to stake and claim the top spot!</span>
       </div>
     );
   }

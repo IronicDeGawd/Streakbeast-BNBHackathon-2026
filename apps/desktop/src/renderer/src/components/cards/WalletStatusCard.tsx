@@ -39,8 +39,14 @@ export default function WalletStatusCard() {
                 animation: slideIn(0.15),
                 transition: 'transform 0.25s ease',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.06)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+            onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.08)';
+                e.currentTarget.style.filter = 'brightness(1.15) drop-shadow(0 4px 18px rgba(250,109,117,0.45))';
+            }}
+            onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.filter = 'none';
+            }}
         >
             <svg
                 width="207"

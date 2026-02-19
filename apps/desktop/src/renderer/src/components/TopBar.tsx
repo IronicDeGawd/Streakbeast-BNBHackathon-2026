@@ -59,7 +59,28 @@ function TopBar(): React.ReactElement {
         ) : (
           <button
             onClick={connect}
-            className="bg-accent hover:bg-accent-light text-white px-4 py-2 rounded-full text-sm font-medium transition-colors"
+            style={{
+              background: '#6C3CE1',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: 9999,
+              fontSize: 14,
+              fontWeight: 500,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#8B5CF6';
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(108,60,225,0.35)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = '#6C3CE1';
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             Connect Wallet
           </button>
