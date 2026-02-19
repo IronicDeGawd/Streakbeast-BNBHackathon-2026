@@ -99,11 +99,15 @@ app.post('/api/mint-badge', async (req, res) => {
 });
 
 /**
- * Start the server
+ * Start the server (local dev only — Vercel uses the export)
  */
-app.listen(config.port, () => {
-  console.log(`\n🏅 Badge Service running on http://localhost:${config.port}`);
-  console.log(`   Badge Contract: ${config.badgeContractAddress}`);
-  console.log(`   Core Contract:  ${config.coreContractAddress}`);
-  console.log(`   Agent key set:  ${config.agentPrivateKey ? 'Yes' : 'NO — minting will fail!'}\n`);
-});
+if (!process.env.VERCEL) {
+  app.listen(config.port, () => {
+    console.log(`\n🏅 Badge Service running on http://localhost:${config.port}`);
+    console.log(`   Badge Contract: ${config.badgeContractAddress}`);
+    console.log(`   Core Contract:  ${config.coreContractAddress}`);
+    console.log(`   Agent key set:  ${config.agentPrivateKey ? 'Yes' : 'NO — minting will fail!'}\n`);
+  });
+}
+
+export default app;
